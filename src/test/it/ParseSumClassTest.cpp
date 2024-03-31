@@ -2,6 +2,8 @@
 #include <doctest/doctest.h>
 #include <fstream>
 
+#include "clazz/CzFile.hpp"
+#include "make.hpp"
 #include "tool/exec.hpp"
 
 using doctest::Contains;
