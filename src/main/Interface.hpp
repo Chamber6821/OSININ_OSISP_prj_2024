@@ -1,6 +1,6 @@
 #pragma once
 
 class Interface {
-  public:
-    virtual ~Interface() = default;
+public:
+  virtual ~Interface() = default;
 };
