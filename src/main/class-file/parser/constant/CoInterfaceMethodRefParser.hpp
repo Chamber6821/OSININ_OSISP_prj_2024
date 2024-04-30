@@ -2,7 +2,7 @@
 
 #include "class-file/constant/CoInterfaceMethodRef.hpp"
 #include "class-file/constant/Constant.hpp"
-#include "class-file/parser/constant/CoSingleRefParser.hpp"
+#include "class-file/parser/constant/CoRefParser.hpp"
 
 using CoInterfaceMethodRefParser =
-  CoSingleRefParser<Constant::Tag::InterfaceMethodRef, CoInterfaceMethodRef>;
+  CoRefParser<Constant::Tag::InterfaceMethodRef, CoInterfaceMethodRef>;

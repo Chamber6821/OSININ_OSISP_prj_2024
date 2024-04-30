@@ -23,6 +23,8 @@ public:
   T parsed(std::istream &in) const override {
     for (auto &el : parsers)
       if (el->canParse(in)) return el->parsed(in);
-    throw std::runtime_error("Can't parse this stream");
+    throw std::runtime_error(
+      std::format("Can't parse this stream at {}", (int)in.tellg())
+    );
   }
 };

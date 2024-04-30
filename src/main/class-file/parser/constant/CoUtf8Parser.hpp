@@ -5,6 +5,7 @@
 #include "class-file/parser/constant/CoParser.hpp"
 #include "make.hpp"
 #include "p.hpp"
+#include "tool/readInt.hpp"
 #include <cstdint>
 #include <string>
 
@@ -13,7 +14,7 @@ public:
   p<CoUtf8> parsed(std::istream &in) const override {
     in.get();
     std::uint16_t length = 0;
-    in.read((char *)&length, sizeof(length));
+    readInt(in, length);
     std::wstring value;
     in.read((char *)value.data(), length);
     return make<CoUtf8>(std::move(value));
