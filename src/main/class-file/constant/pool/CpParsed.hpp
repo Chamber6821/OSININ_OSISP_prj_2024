@@ -30,7 +30,9 @@
 #include "class-file/parser/constant/CoUtf8Parser.hpp"
 #include "make.hpp"
 #include "p.hpp"
+#include "tool/readInt.hpp"
 #include <cstdint>
+#include <iostream>
 #include <istream>
 #include <vector>
 
@@ -56,8 +58,8 @@ public:
       make<upCast<CoNameAndType>>(make<CoNameAndTypeParser>(cp))
     });
     std::uint16_t count;
-    in.read((char *)&count, sizeof(count));
-    for (int i = 0; i < count - 1; i++) {
+    readInt(in, count);
+    for (int i = 1; i < count; i++) {
       cp->add(i, parser.parsed(in));
     }
   }
