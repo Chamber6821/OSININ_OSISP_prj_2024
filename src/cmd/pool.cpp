@@ -1,16 +1,12 @@
-#include "class-file/constant/CoInteger.hpp"
-#include "class-file/constant/CoUtf8.hpp"
 #include "class-file/constant/Constant.hpp"
-#include "class-file/constant/pool/ConstantPool.hpp"
 #include "class-file/constant/pool/CpParsed.hpp"
-#include "tool/swapBytes.hpp"
+#include "tool/readInt.hpp"
 #include "tool/verifyConstant.hpp"
 #include <cstdint>
 #include <exception>
 #include <format>
 #include <fstream>
 #include <iostream>
-#include <ostream>
 #include <stdexcept>
 #include <string>
 
@@ -24,44 +20,44 @@ std::string stringify(const std::exception &e, int indent = 0) {
   }
 }
 
-std::wstring stringify(p<Constant> constant) {
+std::string stringify(p<Constant> constant) {
 #define VERIFY(TAG) (verifyConstant<Co##TAG>(Constant::Tag::TAG, constant))
 #define TO_STRING(TAG, CALL)                                                   \
   (std::format(                                                                \
-    L"{}",                                                                     \
+    "{}",                                                                      \
     verifyConstant<Co##TAG>(Constant::Tag::TAG, constant)->CALL()              \
   ))
   switch (constant->tag()) {
-  case Constant::Tag::Utf8: return TO_STRING(Utf8, value);
+  case Constant::Tag::Utf8: return std::format("'{}'", VERIFY(Utf8)->value());
   case Constant::Tag::Integer: return TO_STRING(Integer, value);
   case Constant::Tag::Float: return TO_STRING(Float, value);
   case Constant::Tag::Long: return TO_STRING(Long, value);
   case Constant::Tag::Double: return TO_STRING(Double, value);
   case Constant::Tag::Class:
-    return std::format(L"{}", stringify(VERIFY(Class)->name()));
+    return std::format("{}", stringify(VERIFY(Class)->name()));
   case Constant::Tag::String:
-    return std::format(L"'{}'", stringify(VERIFY(String)->value()));
+    return std::format("'{}'", stringify(VERIFY(String)->value()));
   case Constant::Tag::FieldRef:
     return std::format(
-      L"FieldRef {}.{}",
+      "FieldRef {}.{}",
       stringify(VERIFY(FieldRef)->clazz()),
       stringify(VERIFY(FieldRef)->type())
     );
   case Constant::Tag::MethodRef:
     return std::format(
-      L"MethodRef {}.{}",
+      "MethodRef {}.{}",
       stringify(VERIFY(MethodRef)->clazz()),
       stringify(VERIFY(MethodRef)->type())
     );
   case Constant::Tag::InterfaceMethodRef:
     return std::format(
-      L"InterfaceMethodRef {}.{}",
+      "InterfaceMethodRef {}.{}",
       stringify(VERIFY(InterfaceMethodRef)->clazz()),
       stringify(VERIFY(InterfaceMethodRef)->type())
     );
   case Constant::Tag::NameAndType:
     return std::format(
-      L"{}:{}",
+      "{}:{}",
       stringify(VERIFY(NameAndType)->type()),
       stringify(VERIFY(NameAndType)->name())
     );
@@ -85,10 +81,9 @@ int main() {
       std::uint16_t majorVersion;
     } prefix;
 
-    fin.read((char *)&prefix, sizeof(prefix));
-    prefix.magic = reverseBytes(prefix.magic);
-    prefix.minorVersion = reverseBytes(prefix.minorVersion);
-    prefix.majorVersion = reverseBytes(prefix.majorVersion);
+    readInt(fin, prefix.magic);
+    readInt(fin, prefix.minorVersion);
+    readInt(fin, prefix.majorVersion);
     std::cout << std::format(
       "Prefix: 0x{:04X} {}.{}\n",
       prefix.magic,
@@ -97,9 +92,8 @@ int main() {
     );
 
     CpParsed pool(fin);
-    std::cout << fin.tellg() << std::endl;
     for (int i = 1; i < 100; i++) {
-      std::wcout << std::format(L"#{}: {}\n", i, stringify(pool.at(i)));
+      std::cout << std::format("#{}: {}\n", i, stringify(pool.at(i)));
     }
 
   } catch (const std::exception &e) {

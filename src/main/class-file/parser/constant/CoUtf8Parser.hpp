@@ -15,7 +15,7 @@ public:
     in.get();
     std::uint16_t length = 0;
     readInt(in, length);
-    std::wstring value;
+    std::string value(length, ' ');
     in.read((char *)value.data(), length);
     return make<CoUtf8>(std::move(value));
   }
