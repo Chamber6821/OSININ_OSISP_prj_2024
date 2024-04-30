@@ -13,12 +13,13 @@ TEST_SUITE("CoClassParser") {
   TEST_CASE("should return class with index 42") {
     struct __attribute__((packed)) {
       std::uint8_t tag;
-      std::uint16_t index;
-    } pack = {(int)Constant::Tag::Class, 42};
+      std::uint8_t index1;
+      std::uint8_t index2;
+    } pack = {(int)Constant::Tag::Class, 0, 42};
 
     std::stringstream buf;
     buf.write((char *)&pack, sizeof(pack));
-    auto constant = make<CoUtf8>(std::wstring());
+    auto constant = make<CoUtf8>(std::string());
     CHECK(
       constant ==
       CoClassParser(make<CpMutable>(std::map<int, p<Constant>>{{42, constant}}))

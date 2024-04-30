@@ -9,7 +9,7 @@
 
 TEST_SUITE("CoClass") {
   TEST_CASE("should return the same constant") {
-    auto constant = make<CoUtf8>(std::wstring());
+    auto constant = make<CoUtf8>(std::string());
     CHECK(
       constant == make<CoClass>(
                     make<CpMutable>(std::map<int, p<Constant>>{{34, constant}}),

@@ -9,16 +9,20 @@
 TEST_SUITE("CpParsed") {
   TEST_CASE("should parse integer") {
     struct __attribute__((packed)) {
-      std::uint16_t count;
+      std::uint8_t count1;
+      std::uint8_t count2;
       std::uint8_t tag;
-      std::int32_t value;
-    } pack = {2, (int)Constant::Tag::Integer, 42};
+      std::uint8_t value1;
+      std::uint8_t value2;
+      std::uint8_t value3;
+      std::uint8_t value4;
+    } pack = {0, 2, (int)Constant::Tag::Integer, 0, 0, 0, 42};
 
     std::stringstream buf;
     buf.write((char *)&pack, sizeof(pack));
     CHECK(
       42 ==
-      verifyConstant<CoInteger>(Constant::Tag::Integer, CpParsed(buf).at(0))
+      verifyConstant<CoInteger>(Constant::Tag::Integer, CpParsed(buf).at(1))
         ->value()
     );
   }
