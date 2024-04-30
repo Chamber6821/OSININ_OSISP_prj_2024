@@ -4,7 +4,7 @@
 #include "p.hpp"
 #include <algorithm>
 #include <istream>
-#include <ranges>
+#include <stdexcept>
 #include <vector>
 
 template <class T>
@@ -15,14 +15,14 @@ public:
   PsVariant(std::vector<p<Parser<T>>> parsers) : parsers(std::move(parsers)) {}
 
   bool canParse(std::istream &in) const override {
-    return std::ranges::any_of(parsers | std::views::transform([&](auto p) {
-                                 return p->canParse(in);
-                               }));
+    for (auto &el : parsers)
+      if (el->canParse(in)) return true;
+    return false;
   }
 
-  T parse(std::istream &in) const override {
-    return (parsers |
-            std::views::filter([&](auto p) { return p->canParse(in); })
-    )->parse(in);
+  T parsed(std::istream &in) const override {
+    for (auto &el : parsers)
+      if (el->canParse(in)) return el->parsed(in);
+    throw std::runtime_error("Can't parse this stream");
   }
 };
