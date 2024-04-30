@@ -4,7 +4,6 @@
 #include "class-file/constant/pool/ConstantPool.hpp"
 #include <exception>
 #include <format>
-#include <iostream>
 #include <map>
 #include <stdexcept>
 
@@ -17,7 +16,6 @@ public:
   CpMutable() : CpMutable(std::map<int, p<Constant>>{}) {}
 
   p<Constant> at(int index) const override try {
-    std::cout << std::format("Get constant #{}\n", index);
     return map.at(index);
   } catch (...) {
 
