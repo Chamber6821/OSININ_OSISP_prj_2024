@@ -1,5 +1,5 @@
 # https://stackoverflow.com/a/18258352/13830772
-rwildcard = $(filter-out \ ,$(foreach pattern,$(2),$(wildcard $(1)/$(pattern)))$(foreach child,$(wildcard $(1)/*),$(call rwildcard,$(child),$(2))))
+rwildcard = $(filter-out \ ,$(foreach pattern,$(2),$(wildcard $(1)/$(pattern))) $(foreach child,$(wildcard $(1)/*),$(call rwildcard,$(child),$(2))))
 # https://stackoverflow.com/a/7324640/13830772
 eq = $(and $(findstring $(1),$(2)),$(findstring $(2),$(1)))
 
