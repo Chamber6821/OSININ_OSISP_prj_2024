@@ -21,8 +21,8 @@ JVM prototype on fibers. Minimal SDK
 - [ ] Implement attributes
   - [ ] Implement ConstantValue
   - [ ] Implement Code
-  - [ ] Implement LineNumberTable
-  - [ ] Implement SourceFile
+  - [ ] Implement Exceptions
+  - [ ] Implement StackMapFrame (?)
 - [ ] Implement bytecode instructions
 - [ ] Execute program 'a+b'
 - [ ] Define compiler dependent classes (may be `String`?)
