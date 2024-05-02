@@ -2,7 +2,7 @@
 JVM prototype on fibers. Minimal SDK
 
 # TODOs
-- [ ] Read `.class` file
+- [x] Read `.class` file
 - [ ] Execute program 'a+b'
 - [ ] Define compiler dependent classes (may be `String`?)
 - [ ] Implement compiler dependent classes
