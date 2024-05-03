@@ -29,5 +29,5 @@ public:
 
   using Result = std::variant<Next, ReturnVoid, ReturnValue, Call, Throw>;
 
-  virtual Result result(p<Context> context) = 0;
+  virtual Result result(p<Context> context) const = 0;
 };
