@@ -1,16 +1,15 @@
 #pragma once
 
-#include "code/context/locals/Locals.hpp"
-#include "java/value/JavaValue.hpp"
+#include "java/value/JavaValues.hpp"
 #include "make.hpp"
-#include "p.hpp"
 #include <vector>
 
-class LsVector : public Locals {
+class JvsVector : public JavaValues {
+
   std::vector<p<JavaValue>> cells;
 
 public:
-  LsVector(int capacity) : cells(capacity, nullptr) {
+  JvsVector(int capacity) : cells(capacity, nullptr) {
     for (auto &cell : cells)
       cell = make<JavaValue>();
   }
