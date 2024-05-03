@@ -5,15 +5,12 @@
 #include "code/context/Context.hpp"
 #include "java/value/JavaValue.hpp"
 #include "p.hpp"
-#include <cstdint>
 #include <variant>
 #include <vector>
 
 class Code : public Interface {
 public:
-  struct Next {
-    std::uint64_t address;
-  };
+  struct Next {};
 
   struct ReturnVoid {};
 
