@@ -61,32 +61,39 @@ public:
           method->descriptor()->value() == signature) {
         for (auto attribute : asRange(*method->attributes())) {
           if (attribute->name()->value() == "Code") {
-            auto bytes = attribute->info();
-            auto prefixEnd = bytes->begin() + 4;
-            auto codeLength = mergeBytes(
-              prefixEnd[0],
-              prefixEnd[1],
-              prefixEnd[2],
-              prefixEnd[3]
-            );
-            auto codeBegin = prefixEnd + 4;
-            auto codeEnd = codeBegin + codeLength;
-            auto exceptionTableLength = mergeBytes(codeEnd[0], codeEnd[1]);
-            auto exceptionTableBegin = codeEnd + 2;
-            auto exceptionTableEnd = exceptionTableBegin + exceptionTableLength;
-            return make<CdWithExceptionTable>(
-              make<EtFromBytes>(
-                std::vector<std::uint8_t>(
-                  exceptionTableBegin,
-                  exceptionTableEnd
+            try {
+              auto bytes = attribute->info();
+              auto prefixEnd = bytes->begin() + 4;
+              auto codeLength = mergeBytes(
+                prefixEnd[0],
+                prefixEnd[1],
+                prefixEnd[2],
+                prefixEnd[3]
+              );
+              auto codeBegin = prefixEnd + 4;
+              auto codeEnd = codeBegin + codeLength;
+              auto exceptionTableLength = mergeBytes(codeEnd[0], codeEnd[1]);
+              auto exceptionTableBegin = codeEnd + 2;
+              auto exceptionTableEnd =
+                exceptionTableBegin + exceptionTableLength;
+              return make<CdWithExceptionTable>(
+                make<EtFromBytes>(
+                  std::vector<std::uint8_t>(
+                    exceptionTableBegin,
+                    exceptionTableEnd
+                  ),
+                  classFile->constantPool()
                 ),
-                classFile->constantPool()
-              ),
-              make<CdFromBytes>(
-                std::vector<std::uint8_t>(codeBegin, codeEnd),
-                instructionSet
-              )
-            );
+                make<CdFromBytes>(
+                  std::vector<std::uint8_t>(codeBegin, codeEnd),
+                  instructionSet
+                )
+              );
+            } catch (...) {
+              std::throw_with_nested(
+                std::runtime_error("Failed while parse code of method")
+              );
+            }
           }
         }
         throw std::runtime_error(
