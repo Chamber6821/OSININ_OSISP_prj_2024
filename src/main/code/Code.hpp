@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Interface.hpp"
-#include "class-file/constant/CoMethodRef.hpp"
 #include "code/context/Context.hpp"
 #include "java/class/JavaClass.hpp"
 #include "java/value/JavaValue.hpp"
@@ -21,7 +20,8 @@ public:
 
   struct Call {
     p<JavaClass> type;
-    p<CoMethodRef> method;
+    std::string methodName;
+    std::string methodSignature;
     p<JavaValues> arguments;
   };
 
