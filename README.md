@@ -18,9 +18,9 @@ JVM prototype on fibers. Minimal SDK
   - [x] Read attributes
   - [x] Read fields
   - [x] Read methods
-- [ ] Implement attributes
-  - [ ] Implement ConstantValue
-  - [ ] Implement Code
+- [x] Implement attributes
+  - [x] Implement ConstantValue
+  - [x] Implement Code
 - [ ] Implement bytecode instructions
 - [ ] Execute program 'a+b'
 - [ ] Define compiler dependent classes (may be `String`?)
