@@ -4,7 +4,7 @@
 #include "code/CdFromBytes.hpp"
 #include "code/CdWithExceptionTable.hpp"
 #include "code/exception-table/EtFromBytes.hpp"
-#include "code/instruction-set/InsAll.hpp"
+#include "code/instruction-set/InstructionSet.hpp"
 #include "java/class/JavaClass.hpp"
 #include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
@@ -21,10 +21,14 @@
 class JcFromClassFile : public JavaClass {
   p<ClassFile> classFile;
   p<JavaClass> super;
+  p<InstructionSet> instructionSet;
 
 public:
-  JcFromClassFile(p<ClassFile> classFile, p<JavaClass> super)
-      : classFile(std::move(classFile)), super(std::move(super)) {}
+  JcFromClassFile(
+    p<ClassFile> classFile, p<JavaClass> super, p<InstructionSet> instructionSet
+  )
+      : classFile(std::move(classFile)), super(std::move(super)),
+        instructionSet(std::move(instructionSet)) {}
 
   p<JavaObject> newObject(p<JavaClass> type) const override {
     auto object = super->newObject(std::move(type));
@@ -73,7 +77,7 @@ public:
               ),
               make<CdFromBytes>(
                 std::vector<std::uint8_t>(codeBegin, codeEnd),
-                make<InsAll>()
+                instructionSet
               )
             );
           }
