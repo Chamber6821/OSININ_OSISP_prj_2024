@@ -13,6 +13,7 @@
 #include "tool/asRange.hpp"
 #include "tool/mergeBytes.hpp"
 #include "tool/valueOfConstant.hpp"
+#include <exception>
 #include <format>
 #include <stdexcept>
 #include <string>
@@ -53,7 +54,8 @@ public:
     return object;
   }
 
-  p<Code> methodCode(std::string name, std::string signature) const override {
+  p<Code> methodCode(std::string name, std::string signature) const override
+    try {
     for (auto method : asRange(*classFile->methods())) {
       if (method->name()->value() == name and
           method->descriptor()->value() == signature) {
@@ -93,5 +95,13 @@ public:
       }
     }
     return super->methodCode(std::move(name), std::move(signature));
+  } catch (...) {
+
+    std::throw_with_nested(std::runtime_error(std::format(
+      "Failed while get method {}:{} in class {}",
+      name,
+      signature,
+      classFile->thisClass()->name()->value()
+    )));
   }
 };
