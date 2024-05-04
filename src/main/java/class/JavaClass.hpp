@@ -2,9 +2,10 @@
 
 #include "Interface.hpp"
 #include "class-file/constant/CoNameAndType.hpp"
-#include "code/Code.hpp"
-#include "java/object/JavaObject.hpp"
 #include "p.hpp"
+
+class Code;
+class JavaObject;
 
 class JavaClass : public Interface {
 public:
