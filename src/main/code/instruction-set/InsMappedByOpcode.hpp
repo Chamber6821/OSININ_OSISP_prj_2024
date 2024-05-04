@@ -22,7 +22,7 @@ public:
     auto opcode = bytes[0];
     if (not map.contains(opcode))
       throw std::runtime_error(
-        std::format("Not found onstruction with opcode 0x{:02X}", opcode)
+        std::format("Not found instruction with opcode 0x{:02X}", opcode)
       );
     return map.at(opcode)->instructionFor(bytes.subspan(1));
   }
