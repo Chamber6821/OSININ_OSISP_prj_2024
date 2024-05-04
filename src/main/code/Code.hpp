@@ -3,10 +3,11 @@
 #include "Interface.hpp"
 #include "class-file/constant/CoMethodRef.hpp"
 #include "code/context/Context.hpp"
+#include "java/class/JavaClass.hpp"
 #include "java/value/JavaValue.hpp"
+#include "java/value/JavaValues.hpp"
 #include "p.hpp"
 #include <variant>
-#include <vector>
 
 class Code : public Interface {
 public:
@@ -19,8 +20,9 @@ public:
   };
 
   struct Call {
+    p<JavaClass> type;
     p<CoMethodRef> method;
-    std::vector<p<JavaValue>> arguments;
+    p<JavaValues> arguments;
   };
 
   struct Throw {
