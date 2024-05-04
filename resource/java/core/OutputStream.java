@@ -1,7 +1,10 @@
 package core;
 
 public interface OutputStream {
-  public final static OutputStream stdout = null;
 
   void put(String string);
+
+  public class Default {
+    public static native OutputStream stdout();
+  }
 }
