@@ -5,7 +5,6 @@
 #include "class-file/constant/pool/ConstantPool.hpp"
 #include "code/exception-table/ExceptionTable.hpp"
 #include "java/class/JavaClass.hpp"
-#include "java/class/JavaClasses.hpp"
 #include "p.hpp"
 #include "tool/mergeBytes.hpp"
 #include "tool/verifyConstant.hpp"
@@ -17,15 +16,10 @@
 class EtFromBytes : public ExceptionTable {
   std::vector<std::uint8_t> bytes;
   p<ConstantPool> pool;
-  p<JavaClasses> classes;
 
 public:
-  EtFromBytes(
-    std::vector<std::uint8_t> bytes, p<ConstantPool> pool,
-    p<JavaClasses> classes
-  )
-      : bytes(std::move(bytes)), pool(std::move(pool)),
-        classes(std::move(classes)) {}
+  EtFromBytes(std::vector<std::uint8_t> bytes, p<ConstantPool> pool)
+      : bytes(std::move(bytes)), pool(std::move(pool)) {}
 
   bool canCatch(std::uint16_t address, p<JavaClass> type) const override {
     for (int offset = 0; offset < (int)bytes.size(); offset += 8) {
@@ -33,12 +27,11 @@ public:
       auto end = mergeBytes(bytes[offset + 2], bytes[offset + 3]);
       auto typeIndex = mergeBytes(bytes[offset + 6], bytes[offset + 7]);
       if (not(start <= address && address < end)) continue;
-      auto handledType = classes->type(
+      auto handledTypeName =
         verifyConstant<CoClass>(Constant::Tag::Class, pool->at(typeIndex))
           ->name()
-          ->value()
-      );
-      if (handledType != type) continue;
+          ->value();
+      if (handledTypeName != type->name()) continue;
       return true;
     }
     return false;
@@ -52,12 +45,11 @@ public:
       auto handler = mergeBytes(bytes[offset + 4], bytes[offset + 5]);
       auto typeIndex = mergeBytes(bytes[offset + 6], bytes[offset + 7]);
       if (not(start <= address && address < end)) continue;
-      auto handledType = classes->type(
+      auto handledTypeName =
         verifyConstant<CoClass>(Constant::Tag::Class, pool->at(typeIndex))
           ->name()
-          ->value()
-      );
-      if (handledType != type) continue;
+          ->value();
+      if (handledTypeName != type->name()) continue;
       return handler;
     }
     throw std::runtime_error(std::format(
