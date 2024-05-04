@@ -31,5 +31,9 @@ public:
 
   using Result = std::variant<Next, ReturnVoid, ReturnValue, Call, Throw>;
 
-  virtual Result result(p<Context> context) const = 0;
+  virtual Result result(p<Context> context, p<JavaObject> exception) const = 0;
+
+  Result result(p<Context> context) const {
+    return result(std::move(context), nullptr);
+  }
 };
