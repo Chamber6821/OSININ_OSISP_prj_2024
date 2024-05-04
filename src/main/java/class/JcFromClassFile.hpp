@@ -15,6 +15,7 @@
 #include "tool/valueOfConstant.hpp"
 #include <format>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -29,6 +30,10 @@ public:
   )
       : classFile(std::move(classFile)), super(std::move(super)),
         instructionSet(std::move(instructionSet)) {}
+
+  std::string name() const override {
+    return classFile->thisClass()->name()->value();
+  }
 
   p<JavaObject> newObject(p<JavaClass> type) const override {
     auto object = super->newObject(std::move(type));
