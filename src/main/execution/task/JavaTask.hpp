@@ -10,6 +10,8 @@
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/Iterable.hpp"
+#include <exception>
+#include <format>
 #include <stack>
 #include <stdexcept>
 #include <utility>
@@ -53,7 +55,14 @@ public:
   JavaTask(std::stack<std::pair<p<Code>, p<Context>>> stack)
       : stack(std::move(stack)) {}
 
-  JavaTask(Code::Call call) { Visitor{this}(std::move(call)); }
+  JavaTask(Code::Call call) try { Visitor{this}(call); } catch (...) {
+
+    std::throw_with_nested(std::runtime_error(std::format(
+      "Failed while initialize stack with call {}:{}",
+      call.methodName,
+      call.methodSignature
+    )));
+  }
 
   p<Iterable<p<Task>>> continuation() override {
     while (not stack.empty()) {
