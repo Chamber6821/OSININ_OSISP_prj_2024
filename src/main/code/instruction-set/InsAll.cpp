@@ -10,6 +10,7 @@
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/mergeBytes.hpp"
+#include "tool/valueOfConstant.hpp"
 #include "tool/verifyConstant.hpp"
 #include <iterator>
 #include <regex>
@@ -57,6 +58,14 @@ InsAll::InsAll(p<JavaClasses> classes)
                   .signature = methodConstant->type()->type()->value()},
                .arguments = arguments,
              };
+           });
+         })},
+        {0x12, make<InsWrap>([classes](auto bytes, p<ConstantPool> pool) {
+           auto constant = valueOfConstant(pool->at(bytes[0]), classes);
+           return make<Code::Wrap>([constant](p<Context> context, auto) {
+             context->stack()->push(constant);
+             jumpForward(context->instructionPointer(), 2);
+             return Code::Next{};
            });
          })}
       }) {}
