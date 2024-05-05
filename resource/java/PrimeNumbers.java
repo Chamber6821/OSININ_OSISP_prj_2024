@@ -16,7 +16,7 @@ public class PrimeNumbers {
                          .reduce(new MergeArrays<Integer>());
 
     for (int i = 0; i < primes.length; i++) {
-      OutputStream.stdout.put("Prime: " + primes[i] + "\n");
+      OutputStream.Default.stdout().put("Prime: " + primes[i] + "\n");
     }
   }
 
