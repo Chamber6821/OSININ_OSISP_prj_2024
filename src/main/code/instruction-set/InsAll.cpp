@@ -3,6 +3,7 @@
 #include "class-file/constant/Constant.hpp"
 #include "class-file/constant/pool/ConstantPool.hpp"
 #include "code/context/Context.hpp"
+#include "code/context/instruction-pointer/InstructionPointer.hpp"
 #include "code/instruction-set/InsWrap.hpp"
 #include "java/class/JavaClasses.hpp"
 #include "java/value/JvsVector.hpp"
@@ -25,6 +26,10 @@ int countArguments(const std::string &signature) {
   );
 }
 
+void jumpForward(p<InstructionPointer> pointer, int offset) {
+  pointer->gotoAddress(pointer->address() + offset);
+}
+
 InsAll::InsAll(p<JavaClasses> classes)
     : InsMappedByOpcode(std::map<std::uint8_t, p<InstructionSet>>{
         {0xB8,
@@ -44,6 +49,7 @@ InsAll::InsAll(p<JavaClasses> classes)
              for (int i = argumentCount - 1; i >= 0; i--) {
                arguments->at(i) = context->stack()->pop();
              }
+             jumpForward(context->instructionPointer(), 3);
              return Code::Call{
                .type = classes->type(methodConstant->clazz()->name()->value()),
                .method =
