@@ -2,8 +2,10 @@
 
 #include "class-file/constant/Constant.hpp"
 
-template <Constant::Tag TAG>
+template <Constant::Tag T>
 class CoWithTag : public Constant {
 public:
-  Tag tag() const override { return TAG; }
+  static constexpr Tag TAG = T;
+
+  Tag tag() const override { return T; }
 };
