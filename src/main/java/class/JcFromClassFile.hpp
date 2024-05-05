@@ -7,6 +7,7 @@
 #include "code/exception-table/EtFromBytes.hpp"
 #include "code/instruction-set/InstructionSet.hpp"
 #include "java/class/JavaClass.hpp"
+#include "java/class/JavaClasses.hpp"
 #include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
 #include "make.hpp"
@@ -24,14 +25,17 @@
 class JcFromClassFile : public JavaClass {
   p<ClassFile> classFile;
   p<JavaClass> super;
+  p<JavaClasses> classes;
   p<InstructionSet> instructionSet;
 
 public:
   JcFromClassFile(
-    p<ClassFile> classFile, p<JavaClass> super, p<InstructionSet> instructionSet
+    p<ClassFile> classFile, p<JavaClass> super, p<JavaClasses> classes,
+    p<InstructionSet> instructionSet
   )
       : classFile(std::move(classFile)), super(std::move(super)),
-        instructionSet(std::move(instructionSet)) {}
+        classes(std::move(classes)), instructionSet(std::move(instructionSet)) {
+  }
 
   std::string name() const override {
     return classFile->thisClass()->name()->value();
@@ -45,9 +49,12 @@ public:
           auto bytes = attribute->info();
           object->setField(
             field->name()->value(),
-            valueOfConstant(classFile->constantPool()->at(
-              mergeBytes(bytes->at(0), bytes->at(1))
-            ))
+            valueOfConstant(
+              classFile->constantPool()->at(
+                mergeBytes(bytes->at(0), bytes->at(1))
+              ),
+              classes
+            )
           );
         }
       }
