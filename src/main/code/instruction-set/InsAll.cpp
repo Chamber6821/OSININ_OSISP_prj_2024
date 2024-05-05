@@ -95,5 +95,9 @@ InsAll::InsAll(p<JavaClasses> classes)
                .arguments = arguments,
              };
            });
+         })},
+        {0xB1, make<InsWrap>([](auto, auto) {
+           return make<Code::Wrap>([](auto, auto) { return Code::ReturnVoid{}; }
+           );
          })}
       }) {}
