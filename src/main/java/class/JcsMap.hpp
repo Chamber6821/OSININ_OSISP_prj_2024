@@ -3,6 +3,7 @@
 #include "java/class/JavaClass.hpp"
 #include "java/class/JavaClasses.hpp"
 #include "p.hpp"
+#include <concepts>
 #include <map>
 #include <string>
 #include <utility>
@@ -14,6 +15,11 @@ public:
   JcsMap(std::map<std::string, p<JavaClass>> map) : map(std::move(map)) {}
 
   JcsMap() : JcsMap(std::map<std::string, p<JavaClass>>{}) {}
+
+  template <std::convertible_to<p<JavaClass>>... Classes>
+  JcsMap(Classes &&...classes)
+      : JcsMap(std::map<std::string, p<JavaClass>>{{classes->name(), classes}...
+        }) {}
 
   void add(std::string name, p<JavaClass> type) { map[name] = type; }
 
