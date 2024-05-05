@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interface.hpp"
+#include "code/MethodReference.hpp"
 #include "code/context/Context.hpp"
 #include "java/class/JavaClass.hpp"
 #include "java/object/JavaObject.hpp"
@@ -24,8 +25,7 @@ public:
 
   struct Call {
     p<JavaClass> type;
-    std::string methodName;
-    std::string methodSignature;
+    MethodReference method;
     p<JavaValues> arguments;
   };
 

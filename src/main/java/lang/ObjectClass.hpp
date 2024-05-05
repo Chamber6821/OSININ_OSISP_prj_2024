@@ -1,11 +1,13 @@
 #pragma once
 
 #include "code/Code.hpp"
+#include "code/MethodReference.hpp"
 #include "java/class/JavaClass.hpp"
 #include "java/object/JavaObject.hpp"
 #include "java/object/JoMap.hpp"
 #include "make.hpp"
 #include "p.hpp"
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -18,9 +20,9 @@ public:
     return make<JoMap>(std::move(type));
   }
 
-  p<Code> methodCode(std::string name, std::string signature) const override {
-    if (name == "<init>" and signature == "()V")
+  p<Code> methodCode(MethodReference reference) const override {
+    if (reference.equal("<init>", "()V"))
       return make<Code::Wrap>([](auto, auto) { return Code::ReturnVoid{}; });
-    throw std::runtime_error("Object has not methods");
+    throw std::runtime_error(std::format("Class has no method {}", reference));
   }
 };

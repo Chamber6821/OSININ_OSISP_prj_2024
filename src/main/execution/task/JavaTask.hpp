@@ -36,7 +36,7 @@ class JavaTask : public Task {
 
     void operator()(Code::Call call) {
       that->stack.emplace(
-        call.type->methodCode(call.methodName, call.methodSignature),
+        call.type->methodCode(std::move(call.method)),
         make<CxWrap>(
           make<IpSimple>(),
           make<SfUnlimited>(),
@@ -57,11 +57,9 @@ public:
 
   JavaTask(Code::Call call) try { Visitor{this}(call); } catch (...) {
 
-    std::throw_with_nested(std::runtime_error(std::format(
-      "Failed while initialize stack with call {}:{}",
-      call.methodName,
-      call.methodSignature
-    )));
+    std::throw_with_nested(std::runtime_error(
+      std::format("Failed while initialize stack with call {}", call.method)
+    ));
   }
 
   p<Iterable<p<Task>>> continuation() override {

@@ -3,6 +3,7 @@
 #include "class-file/ClassFile.hpp"
 #include "code/CdFromBytes.hpp"
 #include "code/CdWithExceptionTable.hpp"
+#include "code/MethodReference.hpp"
 #include "code/exception-table/EtFromBytes.hpp"
 #include "code/instruction-set/InstructionSet.hpp"
 #include "java/class/JavaClass.hpp"
@@ -54,11 +55,10 @@ public:
     return object;
   }
 
-  p<Code> methodCode(std::string name, std::string signature) const override
-    try {
+  p<Code> methodCode(MethodReference reference) const override try {
     for (auto method : asRange(*classFile->methods())) {
-      if (method->name()->value() == name and
-          method->descriptor()->value() == signature) {
+      if (reference
+            .equal(method->name()->value(), method->descriptor()->value())) {
         for (auto attribute : asRange(*method->attributes())) {
           if (attribute->name()->value() == "Code") {
             try {
@@ -97,17 +97,16 @@ public:
           }
         }
         throw std::runtime_error(
-          std::format("Method {}:{} have not body", name, signature)
+          std::format("Method {} have not body", reference)
         );
       }
     }
-    return super->methodCode(std::move(name), std::move(signature));
+    return super->methodCode(std::move(reference));
   } catch (...) {
 
     std::throw_with_nested(std::runtime_error(std::format(
-      "Failed while get method {}:{} in class {}",
-      name,
-      signature,
+      "Failed while get method {} in class {}",
+      reference,
       classFile->thisClass()->name()->value()
     )));
   }
