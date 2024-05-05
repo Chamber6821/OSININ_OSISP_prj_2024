@@ -1,7 +1,6 @@
 #include "InsAll.hpp"
 #include "class-file/constant/CoInterfaceMethodRef.hpp"
 #include "class-file/constant/CoMethodRef.hpp"
-#include "class-file/constant/Constant.hpp"
 #include "class-file/constant/pool/ConstantPool.hpp"
 #include "code/Code.hpp"
 #include "code/MethodReference.hpp"
@@ -17,6 +16,8 @@
 #include "tool/mergeBytes.hpp"
 #include "tool/valueOfConstant.hpp"
 #include "tool/verifyConstant.hpp"
+#include <format>
+#include <iostream>
 #include <iterator>
 #include <regex>
 
@@ -44,16 +45,21 @@ p<JavaValues> popArguments(p<StackFrame> stack, int count) {
   return arguments;
 }
 
+template <class TConstant>
+MethodReference referenceOf(p<TConstant> constant) {
+  return MethodReference{
+    .name = constant->type()->name()->value(),
+    .signature = constant->type()->type()->value()
+  };
+}
+
 InsAll::InsAll(p<JavaClasses> classes)
     : InsMappedByOpcode(std::map<std::uint8_t, p<InstructionSet>>{
         {0xB8, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto method =
              verifyConstant<CoMethodRef>(pool->at(mergeBytes(bytes[0], bytes[1])
              ));
-           auto methodRef = MethodReference{
-             .name = method->type()->name()->value(),
-             .signature = method->type()->type()->value()
-           };
+           auto methodRef = referenceOf(method);
            auto type = classes->type(method->clazz()->name()->value());
            return make<Code::Wrap>([=](p<Context> context, auto) {
              jumpForward(context->instructionPointer(), 3);
@@ -73,6 +79,26 @@ InsAll::InsAll(p<JavaClasses> classes)
              context->stack()->push(constant);
              jumpForward(context->instructionPointer(), 2);
              return Code::Next{};
+           });
+         })},
+        {0xB9, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
+           auto methodRef = referenceOf(verifyConstant<CoInterfaceMethodRef>(
+             pool->at(mergeBytes(bytes[0], bytes[1]))
+           ));
+           return make<Code::Wrap>([=](p<Context> context, auto) {
+             auto arguments = popArguments(
+               context->stack(),
+               countArguments(methodRef.signature) + 1
+             );
+             std::cout << std::format("Got arguments\n");
+             auto type = std::get<p<JavaObject>>(*arguments->at(0))->type();
+             std::cout << std::format("Got type\n");
+             jumpForward(context->instructionPointer(), 5);
+             return Code::Call{
+               .type = type,
+               .method = methodRef,
+               .arguments = arguments,
+             };
            });
          })}
       }) {}
