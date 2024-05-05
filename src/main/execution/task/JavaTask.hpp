@@ -10,6 +10,7 @@
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/Iterable.hpp"
+#include <cstdint>
 #include <exception>
 #include <format>
 #include <stack>
@@ -65,8 +66,16 @@ public:
   p<Iterable<p<Task>>> continuation() override {
     while (not stack.empty()) {
       auto [code, context] = stack.top();
-      auto result = code->result(context);
-      std::visit(Visitor{this}, result);
+      try {
+        auto result = code->result(context);
+        std::visit(Visitor{this}, result);
+      } catch (...) {
+        std::throw_with_nested(std::runtime_error(std::format(
+          "Failed while execute code at {:X} with context {:X}",
+          (std::intptr_t)code.get(),
+          (std::intptr_t)context.get()
+        )));
+      }
     }
     return make<Iterable<p<Task>>::Empty>();
   }
