@@ -16,8 +16,6 @@
 #include "tool/mergeBytes.hpp"
 #include "tool/valueOfConstant.hpp"
 #include "tool/verifyConstant.hpp"
-#include <format>
-#include <iostream>
 #include <iterator>
 #include <regex>
 
@@ -40,7 +38,7 @@ void jumpForward(p<InstructionPointer> pointer, int offset) {
 p<JavaValues> popArguments(p<StackFrame> stack, int count) {
   auto arguments = make<JvsVector>(count);
   for (int i = count - 1; i >= 0; i--) {
-    arguments->at(i) = stack->pop();
+    *arguments->at(i) = *stack->pop();
   }
   return arguments;
 }
@@ -90,12 +88,9 @@ InsAll::InsAll(p<JavaClasses> classes)
                context->stack(),
                countArguments(methodRef.signature) + 1
              );
-             std::cout << std::format("Got arguments\n");
-             auto type = std::get<p<JavaObject>>(*arguments->at(0))->type();
-             std::cout << std::format("Got type\n");
              jumpForward(context->instructionPointer(), 5);
              return Code::Call{
-               .type = type,
+               .type = std::get<p<JavaObject>>(*arguments->at(0))->type(),
                .method = methodRef,
                .arguments = arguments,
              };
