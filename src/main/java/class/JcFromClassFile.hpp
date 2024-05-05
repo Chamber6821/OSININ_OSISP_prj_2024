@@ -86,6 +86,7 @@ public:
                 ),
                 make<CdFromBytes>(
                   std::vector<std::uint8_t>(codeBegin, codeEnd),
+                  classFile->constantPool(),
                   instructionSet
                 )
               );

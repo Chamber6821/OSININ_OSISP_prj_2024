@@ -1,5 +1,6 @@
 #pragma once
 
+#include "class-file/constant/pool/ConstantPool.hpp"
 #include "code/Code.hpp"
 #include "code/context/Context.hpp"
 #include "code/instruction-set/InstructionSet.hpp"
@@ -11,11 +12,16 @@
 
 class CdFromBytes : public Code {
   std::vector<std::uint8_t> bytes;
+  p<ConstantPool> pool;
   p<InstructionSet> instructionSet;
 
 public:
-  CdFromBytes(std::vector<std::uint8_t> bytes, p<InstructionSet> instructionSet)
-      : bytes(std::move(bytes)), instructionSet(std::move(instructionSet)) {}
+  CdFromBytes(
+    std::vector<std::uint8_t> bytes, p<ConstantPool> pool,
+    p<InstructionSet> instructionSet
+  )
+      : bytes(std::move(bytes)), pool(std::move(pool)),
+        instructionSet(std::move(instructionSet)) {}
 
   Result result(p<Context> context, p<JavaObject>) const override {
     Result result = Next{};
@@ -23,7 +29,8 @@ public:
       result = instructionSet
                  ->instructionFor(
                    {bytes.begin() + context->instructionPointer()->address(),
-                    bytes.end()}
+                    bytes.end()},
+                   pool
                  )
                  ->result(context);
     }
