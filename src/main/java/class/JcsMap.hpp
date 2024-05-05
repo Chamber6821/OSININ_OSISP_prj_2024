@@ -4,7 +4,10 @@
 #include "java/class/JavaClasses.hpp"
 #include "p.hpp"
 #include <concepts>
+#include <exception>
+#include <format>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -25,5 +28,12 @@ public:
 
   bool has(std::string name) const override { return map.contains(name); }
 
-  p<JavaClass> type(std::string name) const override { return map.at(name); }
+  p<JavaClass> type(std::string name) const override try {
+    return map.at(name);
+  } catch (...) {
+
+    std::throw_with_nested(
+      std::runtime_error(std::format("Not found class {}", name))
+    );
+  }
 };
