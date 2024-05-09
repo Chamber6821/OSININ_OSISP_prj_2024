@@ -43,7 +43,7 @@ public:
   T next() override {
     if (not element.has_value())
       throw std::runtime_error("Iterable::Single already gave element away");
-    return std::move(element);
+    return std::move(*element);
   }
 };
 
