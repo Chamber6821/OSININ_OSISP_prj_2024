@@ -13,12 +13,13 @@
 #include <cstdint>
 #include <exception>
 #include <format>
+#include <memory>
 #include <stack>
 #include <stdexcept>
 #include <utility>
 #include <variant>
 
-class JavaTask : public Task {
+class JavaTask : public Task, private std::enable_shared_from_this<Task> {
   std::stack<std::pair<p<Code>, p<Context>>> stack;
 
   struct Visitor {
@@ -50,6 +51,10 @@ class JavaTask : public Task {
     void operator()(Code::Throw) {
       throw std::runtime_error("Uncaught Java exception");
     }
+
+    void operator()(Code::ExecuteTasks) {
+      throw std::runtime_error("Unexpected code result: ExecuteTasks");
+    }
   };
 
 public:
@@ -68,6 +73,11 @@ public:
       auto [code, context] = stack.top();
       try {
         auto result = code->result(context);
+        if (std::holds_alternative<Code::ExecuteTasks>(result))
+          return make<Iterable<p<Task>>::Union>(
+            std::move(std::get<Code::ExecuteTasks>(result).tasks),
+            make<Iterable<p<Task>>::Single>(shared_from_this())
+          );
         std::visit(Visitor{this}, result);
       } catch (...) {
         std::throw_with_nested(std::runtime_error(std::format(
