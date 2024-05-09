@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Interface.hpp"
+#include "p.hpp"
 #include <algorithm>
 #include <deque>
 #include <optional>
@@ -15,6 +16,7 @@ public:
   class Empty;
   class Single;
   class Sequence;
+  class Union;
 
   virtual bool hasNext() const = 0;
 
@@ -65,5 +67,33 @@ public:
     T element = std::move(elements.front());
     elements.pop();
     return element;
+  }
+};
+
+template <class T>
+class Iterable<T>::Union : public Iterable {
+  std::deque<p<Iterable>> sequences;
+
+public:
+  Union(std::deque<p<Iterable>> sequences) : sequences(std::move(sequences)) {}
+
+  template <class... Sequences>
+  Union(Sequences &&...sequences)
+      : Union(std::deque<p<Iterable>>{sequences...}) {}
+
+  bool hasNext() const override {
+    for (const auto &sequence : sequences) {
+      if (sequence->hasNext()) return true;
+    }
+    return false;
+  }
+
+  T next() override {
+    while (not sequences.empty()) {
+      auto &sequence = sequences.front();
+      if (sequence->hasNext()) return sequence->next();
+      sequences.pop_front();
+    }
+    throw std::runtime_error("Iterable::Union is exhausted");
   }
 };
