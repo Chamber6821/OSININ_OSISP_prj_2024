@@ -3,11 +3,13 @@
 #include "Interface.hpp"
 #include "code/MethodReference.hpp"
 #include "code/context/Context.hpp"
+#include "execution/task/Task.hpp"
 #include "java/class/JavaClass.hpp"
 #include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
 #include "p.hpp"
+#include "tool/Iterable.hpp"
 #include <algorithm>
 #include <functional>
 #include <utility>
@@ -33,7 +35,12 @@ public:
     p<JavaObject> exception;
   };
 
-  using Result = std::variant<Next, ReturnVoid, ReturnValue, Call, Throw>;
+  struct ExecuteTasks {
+    p<Iterable<p<Task>>> tasks;
+  };
+
+  using Result =
+    std::variant<Next, ReturnVoid, ReturnValue, Call, Throw, ExecuteTasks>;
 
   class Wrap;
 
