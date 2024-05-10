@@ -4,7 +4,8 @@
 #include "execution/task/JavaTask.hpp"
 #include "java/class/JcFromClassFile.hpp"
 #include "java/class/JcsMap.hpp"
-#include "java/core/OutputStream_Default.hpp"
+#include "java/core/Runtime.hpp"
+#include "java/core/Stdout.hpp"
 #include "java/lang/ObjectClass.hpp"
 #include "java/lang/StringClass.hpp"
 #include "java/value/JvsAutoExtendable.hpp"
@@ -18,8 +19,10 @@ int main() {
   try {
     auto objectClass = make<ObjectClass>();
     auto stringClass = make<StringClass>(objectClass);
-    auto outputStreamDefault = make<OutputStream_Default>();
-    auto classes = make<JcsMap>(objectClass, stringClass, outputStreamDefault);
+    auto stdoutClass = make<Stdout>(std::cout, objectClass);
+    auto runtimeClass = make<Runtime>(stdoutClass->newObject(stdoutClass));
+    auto classes =
+      make<JcsMap>(objectClass, stringClass, runtimeClass, stdoutClass);
     std::ifstream mainClass("resource/java/HelloWorld.class", std::ios::binary);
     auto task = make<JavaTask>(Code::Call{
       .type = make<JcFromClassFile>(
