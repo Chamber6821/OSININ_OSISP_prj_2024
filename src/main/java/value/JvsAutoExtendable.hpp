@@ -3,6 +3,7 @@
 
 #include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
+#include "make.hpp"
 #include "p.hpp"
 #include <map>
 
@@ -15,5 +16,8 @@ public:
 
   JvsAutoExtendable() : JvsAutoExtendable(std::map<int, p<JavaValue>>{}) {}
 
-  p<JavaValue> at(int index) const override { return cells[index]; }
+  p<JavaValue> at(int index) const override {
+    if (not cells.contains(index)) cells[index] = make<JavaValue>();
+    return cells.at(index);
+  }
 };
