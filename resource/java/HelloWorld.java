@@ -1,7 +1,7 @@
-import core.OutputStream;
+import core.Runtime;
 
 public class HelloWorld {
   public static void main(String[] args) {
-    OutputStream.Default.stdout().put("Hello World!\n");
+    Runtime.stdout().put("Hello World!\n");
   }
 }
