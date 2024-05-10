@@ -43,7 +43,7 @@ public:
     p<InstructionSet> instructionSet
   )
       : JcFromClassFile(
-          classFile, classes->type(classFile->thisClass()->name()->value()),
+          classFile, classes->type(classFile->superClass()->name()->value()),
           classes, std::move(instructionSet)
         ) {}
 
