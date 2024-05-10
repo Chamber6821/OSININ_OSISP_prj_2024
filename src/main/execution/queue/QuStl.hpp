@@ -4,6 +4,7 @@
 #include "execution/task/Task.hpp"
 #include "p.hpp"
 #include "tool/Iterable.hpp"
+#include <optional>
 #include <queue>
 
 class QuStl : public Queue {
@@ -13,9 +14,10 @@ public:
   QuStl(std::queue<p<Task>> tasks) : tasks(std::move(tasks)) {}
 
   template <class... Tasks>
-  QuStl(Tasks &&...tasks) : tasks(std::deque{tasks...}) {}
+  QuStl(Tasks &&...tasks) : tasks(std::deque<p<Task>>{tasks...}) {}
 
-  p<Task> pop() override {
+  std::optional<p<Task>> pop() override {
+    if (tasks.empty()) return std::nullopt;
     auto task = std::move(tasks.front());
     tasks.pop();
     return task;

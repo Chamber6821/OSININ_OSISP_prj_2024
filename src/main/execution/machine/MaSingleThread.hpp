@@ -11,7 +11,7 @@ public:
   MaSingleThread(p<Queue> queue) : queue(std::move(queue)) {}
 
   void run() override {
-    while (not queue->empty())
-      queue->push(queue->pop()->continuation());
+    while (auto task = queue->pop())
+      queue->push(task.value()->continuation());
   }
 };
