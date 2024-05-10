@@ -1,6 +1,8 @@
 #include "class-file/CfParsed.hpp"
 #include "code/Code.hpp"
 #include "code/instruction-set/InsAll.hpp"
+#include "execution/machine/MaSingleThread.hpp"
+#include "execution/queue/QuStl.hpp"
 #include "execution/task/JavaTask.hpp"
 #include "java/class/JcFromClassFile.hpp"
 #include "java/class/JcsSystem.hpp"
@@ -15,17 +17,17 @@ int main() {
   try {
     auto classes = make<JcsSystem>();
     std::ifstream mainClass("resource/java/HelloWorld.class", std::ios::binary);
-    auto task = make<JavaTask>(Code::Call{
-      .type = make<JcFromClassFile>(
-        make<CfParsed>(mainClass),
-        classes->type("java/lang/Object"),
-        classes,
-        make<InsAll>(classes)
-      ),
-      .method = {"main", "([Ljava/lang/String;)V"},
-      .arguments = make<JvsAutoExtendable>()
-    });
-    task->continuation();
+    make<MaSingleThread>(make<QuStl>(make<JavaTask>(Code::Call{
+                           .type = make<JcFromClassFile>(
+                             make<CfParsed>(mainClass),
+                             classes->type("java/lang/Object"),
+                             classes,
+                             make<InsAll>(classes)
+                           ),
+                           .method = {"main", "([Ljava/lang/String;)V"},
+                           .arguments = make<JvsAutoExtendable>()
+                         })))
+      ->run();
   } catch (const std::exception &e) {
     std::cout << stringify(e);
   }
