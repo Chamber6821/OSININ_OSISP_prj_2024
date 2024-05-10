@@ -6,23 +6,25 @@
 #include "java/class/JcsMap.hpp"
 #include "make.hpp"
 #include "p.hpp"
+#include <csignal>
 #include <set>
+#include <utility>
 
 class JcsFromClassFiles : public JavaClasses {
   p<JcsMap> origin;
 
 public:
   JcsFromClassFiles(p<JcsMap> origin, std::set<p<ClassFile>> files)
-      : origin(std::move(origin)) {
+      : origin(origin) {
     while (not files.empty()) {
       std::set<p<ClassFile>> toRemove;
       for (const auto &file : files) {
         auto superName = file->superClass()->name()->value();
         if (not origin->has(superName)) continue;
-        auto super = this->origin->type(superName);
-        this->origin->add(
+        auto super = origin->type(superName);
+        origin->add(
           file->thisClass()->name()->value(),
-          make<JcFromClassFile>(file, this->origin)
+          make<JcFromClassFile>(file, origin)
         );
         toRemove.insert(file);
       }
