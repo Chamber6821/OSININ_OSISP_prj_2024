@@ -4,6 +4,7 @@
 #include "p.hpp"
 #include <algorithm>
 #include <deque>
+#include <iostream>
 #include <optional>
 #include <queue>
 #include <stdexcept>
@@ -45,7 +46,9 @@ public:
   T next() override {
     if (not element.has_value())
       throw std::runtime_error("Iterable::Single already gave element away");
-    return std::move(*element);
+    auto value = std::move(element.value());
+    element.reset();
+    return value;
   }
 };
 
