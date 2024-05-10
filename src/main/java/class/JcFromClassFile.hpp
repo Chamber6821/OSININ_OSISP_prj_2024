@@ -5,6 +5,7 @@
 #include "code/CdWithExceptionTable.hpp"
 #include "code/MethodReference.hpp"
 #include "code/exception-table/EtFromBytes.hpp"
+#include "code/instruction-set/InsAll.hpp"
 #include "code/instruction-set/InstructionSet.hpp"
 #include "java/class/JavaClass.hpp"
 #include "java/class/JavaClasses.hpp"
@@ -36,6 +37,18 @@ public:
       : classFile(std::move(classFile)), super(std::move(super)),
         classes(std::move(classes)), instructionSet(std::move(instructionSet)) {
   }
+
+  JcFromClassFile(
+    p<ClassFile> classFile, p<JavaClasses> classes,
+    p<InstructionSet> instructionSet
+  )
+      : JcFromClassFile(
+          classFile, classes->type(classFile->thisClass()->name()->value()),
+          classes, std::move(instructionSet)
+        ) {}
+
+  JcFromClassFile(p<ClassFile> classFile, p<JavaClasses> classes)
+      : JcFromClassFile(std::move(classFile), classes, make<InsAll>(classes)) {}
 
   std::string name() const override {
     return classFile->thisClass()->name()->value();
