@@ -22,7 +22,7 @@ public:
         auto super = this->origin->type(superName);
         this->origin->add(
           file->thisClass()->name()->value(),
-          make<JcFromClassFile>(file)
+          make<JcFromClassFile>(file, this->origin)
         );
         toRemove.insert(file);
       }
