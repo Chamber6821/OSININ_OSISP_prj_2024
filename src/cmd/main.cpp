@@ -1,65 +1,48 @@
-#include <cinttypes>
+#include "class-file/CfParsed.hpp"
+#include "class-file/ClassFile.hpp"
+#include "execution/machine/MaSingleThread.hpp"
+#include "execution/queue/QuStl.hpp"
+#include "execution/task/JavaTask.hpp"
+#include "java/class/JcsFromClassFiles.hpp"
+#include "java/class/JcsSystem.hpp"
+#include "make.hpp"
+#include "p.hpp"
+#include "tool/stringify/exception.hpp"
+#include <fstream>
 #include <iostream>
+#include <stdexcept>
+#include <string_view>
+#include <vector>
 
-struct JavaClassPrefix {
-    std::uint32_t magic;
-    std::uint16_t minor_version;
-    std::uint16_t major_version;
-};
+int main(int argc, char **argv) {
+  try {
+    auto arguments = std::vector<std::string_view>(argv, argv + argc);
+    if (arguments.size() < 2)
+      throw std::runtime_error("At least one class file required, but got 0");
 
-struct JavaClassConstantPool {
-    struct Constant {
-        std::uint8_t tag;
-        std::uint8_t info[];
-    };
+    auto filenames = std::span(arguments.begin() + 1, arguments.end());
+    auto files = std::vector<std::ifstream>();
+    for (auto filename : filenames) {
+      files.emplace_back(std::string(filename), std::ios::binary);
+    }
+    auto parsedClasses = std::vector<p<ClassFile>>();
+    for (auto &file : files) {
+      parsedClasses.emplace_back(make<CfParsed>(file));
+    }
 
-    std::uint16_t constant_pool_count;
-    Constant *constant_pool; // [constant_pool_count-1]
-};
-
-struct JavaClassHead {
-    std::uint16_t access_flags;
-    std::uint16_t this_class;
-    std::uint16_t super_class;
-    std::uint16_t interfaces_count;
-    std::uint16_t interfaces[];
-};
-
-struct Attribute {
-    std::uint16_t attribute_name_index;
-    std::uint32_t attribute_length;
-    std::uint8_t info[];
-};
-
-struct JavaClassFields {
-    struct Field {
-        std::uint16_t access_flags;
-        std::uint16_t name_index;
-        std::uint16_t descriptor_index;
-        std::uint16_t attributes_count;
-        Attribute *attributes;
-    };
-
-    std::uint16_t fields_count;
-    Field *fields;
-};
-
-struct JavaClassMethods {
-    struct Method {
-        std::uint16_t access_flags;
-        std::uint16_t name_index;
-        std::uint16_t descriptor_index;
-        std::uint16_t attributes_count;
-        Attribute *attributes;
-    };
-
-    std::uint16_t methods_count;
-    Method *methods;
-};
-
-struct JavaClassAttributes {
-    std::uint16_t attributes_count;
-    Attribute *attributes;
-};
-
-int main() { std::cout << "Hello World!\n"; }
+    make<MaSingleThread>(
+      make<QuStl>(make<JavaTask>(Code::Call{
+        .type = make<JcsFromClassFiles>(
+                  make<JcsSystem>(),
+                  std::set(parsedClasses.begin(), parsedClasses.end())
+        )
+                  ->type(parsedClasses.front()->thisClass()->name()->value()),
+        .method = {"main", "([Ljava/lang/String;)V"},
+        .arguments = make<JvsAutoExtendable>()
+      }))
+    )
+      ->run();
+  } catch (const std::exception &e) {
+    std::cout << stringify(e);
+  }
+}
