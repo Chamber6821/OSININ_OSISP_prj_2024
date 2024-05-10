@@ -9,6 +9,7 @@
 #include "code/context/stack/StackFrame.hpp"
 #include "code/instruction-set/InsWrap.hpp"
 #include "java/class/JavaClasses.hpp"
+#include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
 #include "java/value/JvsVector.hpp"
 #include "make.hpp"
@@ -99,5 +100,14 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0xB1, make<InsWrap>([](auto, auto) {
            return make<Code::Wrap>([](auto, auto) { return Code::ReturnVoid{}; }
            );
+         })},
+        {0x11, make<InsWrap>([](auto bytes, auto) {
+           auto constant =
+             make<JavaValue>(std::int32_t(mergeBytes(bytes[0], bytes[1])));
+           return make<Code::Wrap>([=](p<Context> context, auto) {
+             context->stack()->push(constant);
+             jumpForward(context->instructionPointer(), 3);
+             return Code::Next{};
+           });
          })}
       }) {}
