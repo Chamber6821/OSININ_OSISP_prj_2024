@@ -19,7 +19,7 @@
 #include <utility>
 #include <variant>
 
-class JavaTask : public Task, private std::enable_shared_from_this<Task> {
+class JavaTask : public Task, public std::enable_shared_from_this<Task> {
   std::stack<std::pair<p<Code>, p<Context>>> stack;
 
   struct Visitor {
