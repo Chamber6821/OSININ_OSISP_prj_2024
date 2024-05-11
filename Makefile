@@ -32,7 +32,7 @@ all: app
 
 .PHONY: run
 run: $(APP_EXECUTABLE)
-	@$(APP_EXECUTABLE)
+	@$(APP_EXECUTABLE) ./resource/java/PrimeNumbers.class ./resource/java/PrimeNumbers$*
 
 .PHONY: app
 app: $(APP_EXECUTABLE)
