@@ -36,7 +36,7 @@ class JavaTask : public Task, public std::enable_shared_from_this<Task> {
       that->stack.top().second->stack()->push(std::move(result.value));
     }
 
-    void operator()(Code::Call call) {
+    void operator()(Code::Call call) try {
       that->stack.emplace(
         call.type->methodCode(std::move(call.method)),
         make<CxWrap>(
@@ -46,6 +46,13 @@ class JavaTask : public Task, public std::enable_shared_from_this<Task> {
           std::move(call.arguments)
         )
       );
+    } catch (...) {
+
+      std::throw_with_nested(std::runtime_error(std::format(
+        "Failed while call {} of {}",
+        call.method,
+        call.type->name()
+      )));
     }
 
     void operator()(Code::Throw) {
