@@ -7,7 +7,11 @@
 #include "make.hpp"
 #include "p.hpp"
 #include <csignal>
+#include <cstdint>
+#include <exception>
+#include <format>
 #include <set>
+#include <stdexcept>
 #include <utility>
 
 class JcsFromClassFiles : public JavaClasses {
@@ -16,22 +20,32 @@ class JcsFromClassFiles : public JavaClasses {
 public:
   JcsFromClassFiles(p<JcsMap> origin, std::set<p<ClassFile>> files)
       : origin(origin) {
-    while (not files.empty()) {
-      std::set<p<ClassFile>> toRemove;
-      for (const auto &file : files) {
-        auto superName = file->superClass()->name()->value();
-        if (not origin->has(superName)) continue;
-        auto super = origin->type(superName);
-        origin->add(
-          file->thisClass()->name()->value(),
-          make<JcFromClassFile>(file, origin)
-        );
-        toRemove.insert(file);
+    try {
+      while (not files.empty()) {
+        std::set<p<ClassFile>> toRemove;
+        for (const auto &file : files) {
+          try {
+            auto superName = file->superClass()->name()->value();
+            if (not origin->has(superName)) continue;
+            auto super = origin->type(superName);
+            origin->add(
+              file->thisClass()->name()->value(),
+              make<JcFromClassFile>(file, origin)
+            );
+            toRemove.insert(file);
+          } catch (...) {
+            std::throw_with_nested(std::runtime_error(
+              std::format("Fail to load class {:X}", (std::intptr_t)file.get())
+            ));
+          }
+        }
+        if (toRemove.empty())
+          throw std::runtime_error("Can't build Java class tree");
+        for (auto file : toRemove)
+          files.erase(file);
       }
-      if (toRemove.empty())
-        throw std::runtime_error("Can't build Java class tree");
-      for (auto file : toRemove)
-        files.erase(file);
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error("Fail to load classes"));
     }
   }
 
