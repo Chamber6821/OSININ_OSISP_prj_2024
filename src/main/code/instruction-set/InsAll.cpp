@@ -157,9 +157,10 @@ InsAll::InsAll(p<JavaClasses> classes)
            context->stack()->push(value);
            context->stack()->push(value);
          })},
-        {0x1B, stackInstruction([](p<Context> context) {
-           context->stack()->push(context->locals()->at(1));
-         })},
+        {0x1A, fromLocalToStack(0)},
+        {0x1B, fromLocalToStack(1)},
+        {0x1C, fromLocalToStack(2)},
+        {0x1D, fromLocalToStack(3)},
         {0xB7, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto methodRef = referenceOf(verifyConstant<CoMethodRef>(
              pool->at(mergeBytes(bytes[0], bytes[1]))
