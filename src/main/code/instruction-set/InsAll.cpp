@@ -221,10 +221,6 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
-        {0x3B, fromStackToLocal(0)},
-        {0x3C, fromStackToLocal(1)},
-        {0x3D, fromStackToLocal(2)},
-        {0x3E, fromStackToLocal(3)},
         {0xBB, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto type = classes->type(
              verifyConstant<CoClass>(pool->at(mergeBytes(bytes[0], bytes[1])))
@@ -242,10 +238,6 @@ InsAll::InsAll(p<JavaClasses> classes)
            context->stack()->push(value);
            context->stack()->push(value);
          })},
-        {0x1A, fromLocalToStack(0)},
-        {0x1B, fromLocalToStack(1)},
-        {0x1C, fromLocalToStack(2)},
-        {0x1D, fromLocalToStack(3)},
         {0xB7, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto methodRef = referenceOf(verifyConstant<CoMethodRef>(
              pool->at(mergeBytes(bytes[0], bytes[1]))
@@ -263,10 +255,6 @@ InsAll::InsAll(p<JavaClasses> classes)
              };
            });
          })},
-        {0x2A, fromLocalToStack(0)},
-        {0x2B, fromLocalToStack(1)},
-        {0x2C, fromLocalToStack(2)},
-        {0x2D, fromLocalToStack(3)},
         {0xB5, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto fileName =
              verifyConstant<CoFieldRef>(pool->at(mergeBytes(bytes[0], bytes[1]))
@@ -279,10 +267,6 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
-        {0x4B, fromStackToLocal(0)},
-        {0x4C, fromStackToLocal(1)},
-        {0x4D, fromStackToLocal(2)},
-        {0x4E, fromStackToLocal(3)},
         {0x01, loadValue(nullptr)},
         {0x02, loadValue(std::int32_t(-1))},
         {0x03, loadValue(std::int32_t(0))},
@@ -298,6 +282,22 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x0D, loadValue(float(2))},
         {0x0E, loadValue(double(0))},
         {0x0F, loadValue(double(1))},
+        {0x1A, fromLocalToStack(0)},
+        {0x1B, fromLocalToStack(1)},
+        {0x1C, fromLocalToStack(2)},
+        {0x1D, fromLocalToStack(3)},
+        {0x2A, fromLocalToStack(0)},
+        {0x2B, fromLocalToStack(1)},
+        {0x2C, fromLocalToStack(2)},
+        {0x2D, fromLocalToStack(3)},
+        {0x3B, fromStackToLocal(0)},
+        {0x3C, fromStackToLocal(1)},
+        {0x3D, fromStackToLocal(2)},
+        {0x3E, fromStackToLocal(3)},
+        {0x4B, fromStackToLocal(0)},
+        {0x4C, fromStackToLocal(1)},
+        {0x4D, fromStackToLocal(2)},
+        {0x4E, fromStackToLocal(3)},
         {0x60, calc([](std::int32_t a, std::int32_t b) { return a + b; })},
         {0x61, calc([](std::int64_t a, std::int64_t b) { return a + b; })},
         {0x62, calc([](float a, float b) { return a + b; })},
