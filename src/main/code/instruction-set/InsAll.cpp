@@ -66,6 +66,18 @@ stackInstruction(std::function<void(p<Context> context)> action) {
   });
 }
 
+p<InstructionSet> fromStackToLocal(int index) {
+  return stackInstruction([=](p<Context> context) {
+    context->locals()->put(index, context->stack()->pop());
+  });
+}
+
+p<InstructionSet> fromLocalToStack(int index) {
+  return stackInstruction([=](p<Context> context) {
+    context->stack()->push(context->locals()->at(index));
+  });
+}
+
 InsAll::InsAll(p<JavaClasses> classes)
     : InsMappedByOpcode(std::map<std::uint8_t, p<InstructionSet>>{
         {0xB8, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
