@@ -55,7 +55,8 @@ class Code::Wrap : public Code {
   std::function<Result(p<Context>, p<JavaObject>)> implementation;
 
 public:
-  Wrap(auto implementation) : implementation(std::move(implementation)) {}
+  Wrap(std::function<Result(p<Context>, p<JavaObject>)> implementation)
+      : implementation(std::move(implementation)) {}
 
   Wrap(std::function<Result(p<Context>)> implementation)
       : Wrap(
