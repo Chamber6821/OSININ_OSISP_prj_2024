@@ -27,6 +27,7 @@
 #include <functional>
 #include <iterator>
 #include <regex>
+#include <stdexcept>
 
 int countArguments(const std::string &signature) {
   std::regex argumentPattern(R"(\[*B|C|D|F|I|J|S|Z|V|L[^;]+;)");
@@ -182,6 +183,21 @@ p<InstructionSet> storeToArray() {
     auto array = std::get<p<JavaObject>>(*stack->pop());
     array->setField(std::format("${}", index), std::move(value));
   });
+}
+
+p<JavaValue> defaultValueForType(int atype) {
+  switch (atype) {
+  case 4:
+  case 5:
+  case 8:
+  case 9:
+  case 10: return make<JavaValue>(std::int32_t(0));
+  case 6: return make<JavaValue>(float(0));
+  case 7: return make<JavaValue>(double(0));
+  case 11: return make<JavaValue>(std::int64_t(0));
+  default:
+    throw std::runtime_error(std::format("Impossible array type: {}", atype));
+  }
 }
 
 InsAll::InsAll(p<JavaClasses> classes)
@@ -375,6 +391,41 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0xA4, jumpIf([](std::int32_t a, std::int32_t b) { return a <= b; })},
         {0xA5, jumpIf([](p<JavaObject> a, p<JavaObject> b) { return a == b; })},
         {0xA6, jumpIf([](p<JavaObject> a, p<JavaObject> b) { return a != b; })},
+        {0xBC, make<InsWrap>([=](auto bytes, auto) {
+           auto value = defaultValueForType(bytes[0]);
+           return make<Code::Wrap>([=](p<Context> context) {
+             auto length = std::get<std::int32_t>(*context->stack()->pop());
+             auto objectClass = classes->type("java/lang/Object");
+             auto array = objectClass->newObject(objectClass);
+             array->setField("$length", make<JavaValue>(length));
+             for (int i = 0; i < length; i++) {
+               array->setField(std::format("${}", i), value);
+             }
+             context->stack()->push(make<JavaValue>(array));
+             jumpForward(context->instructionPointer(), 2);
+             return Code::Next{};
+           });
+         })},
+        {0xBD, make<InsWrap>([=](auto, auto) {
+           auto value = make<JavaValue>(nullptr);
+           return make<Code::Wrap>([=](p<Context> context) {
+             auto length = std::get<std::int32_t>(*context->stack()->pop());
+             auto objectClass = classes->type("java/lang/Object");
+             auto array = objectClass->newObject(objectClass);
+             array->setField("$length", make<JavaValue>(length));
+             for (int i = 0; i < length; i++) {
+               array->setField(std::format("${}", i), value);
+             }
+             context->stack()->push(make<JavaValue>(array));
+             jumpForward(context->instructionPointer(), 3);
+             return Code::Next{};
+           });
+         })},
+        {0xBC, stackInstruction([](p<Context> context) {
+           context->stack()->push(
+             std::get<p<JavaObject>>(*context->stack()->pop())->field("$length")
+           );
+         })},
         {0xC6, jumpIf([](p<JavaObject> a) { return a == nullptr; })},
         {0xC7, jumpIf([](p<JavaObject> a) { return a != nullptr; })},
       }) {}
