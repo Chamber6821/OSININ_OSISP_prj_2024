@@ -13,6 +13,7 @@
 #include "p.hpp"
 #include "tool/Iterable.hpp"
 #include <format>
+#include <map>
 #include <stdexcept>
 #include <string>
 
@@ -47,12 +48,15 @@ public:
         if (context->instructionPointer()->address() > 0)
           return Code::ReturnVoid{};
         context->instructionPointer()->gotoAddress(1);
-        auto object = std::get<p<JavaObject>>(*context->locals()->at(0));
+        auto objectValue = context->locals()->at(0);
+        auto object = std::get<p<JavaObject>>(*objectValue);
         return Code::ExecuteTasks{
           .tasks = make<Iterable<p<Task>>::Single>(make<JavaTask>(Code::Call{
             .type = object->type(),
             .method = {.name = "run", .signature = "()V"},
-            .arguments = make<JvsAutoExtendable>()
+            .arguments = make<JvsAutoExtendable>(
+              std::map<int, p<JavaValue>>{{0, std::move(objectValue)}}
+            )
           }))
         };
       });
