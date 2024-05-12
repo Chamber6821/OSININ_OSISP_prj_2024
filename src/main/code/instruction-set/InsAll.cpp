@@ -13,7 +13,7 @@
 #include "java/class/JavaClasses.hpp"
 #include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
-#include "java/value/JvsVector.hpp"
+#include "java/value/JvsAutoExtendable.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/mergeBytes.hpp"
@@ -40,7 +40,7 @@ void jumpForward(p<InstructionPointer> pointer, int offset) {
 }
 
 p<JavaValues> popArguments(p<StackFrame> stack, int count) {
-  auto arguments = make<JvsVector>(count);
+  auto arguments = make<JvsAutoExtendable>();
   for (int i = count - 1; i >= 0; i--) {
     arguments->put(i, stack->pop());
   }

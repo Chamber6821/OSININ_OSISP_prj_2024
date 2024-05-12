@@ -11,5 +11,4 @@ public:
   virtual p<InstructionPointer> instructionPointer() const = 0;
   virtual p<StackFrame> stack() const = 0;
   virtual p<JavaValues> locals() const = 0;
-  virtual p<JavaValues> arguments() const = 0;
 };

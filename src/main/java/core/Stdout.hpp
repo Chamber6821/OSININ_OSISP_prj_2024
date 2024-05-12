@@ -24,8 +24,7 @@ public:
   p<Code> methodCode(MethodReference reference) const override {
     if (reference.equal("put", "(Ljava/lang/String;)V"))
       return make<Code::Wrap>([this](p<Context> context, auto) {
-        auto stringObject =
-          std::get<p<JavaObject>>(*context->arguments()->at(1));
+        auto stringObject = std::get<p<JavaObject>>(*context->locals()->at(1));
         auto arrayObject =
           std::get<p<JavaObject>>(*stringObject->field("$content"));
         auto length = std::get<std::int32_t>(*arrayObject->field("$length"));

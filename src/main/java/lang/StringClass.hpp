@@ -24,7 +24,7 @@ public:
   p<Code> methodCode(MethodReference reference) const override {
     if (reference.equal("<init>", "([char;)V"))
       return make<Code::Wrap>([&](p<Context> context, auto) {
-        auto arguments = context->arguments();
+        auto arguments = context->locals();
         auto arg0 = arguments->at(0);
         auto arg1 = arguments->at(1);
         std::get<p<JavaObject>>(*arg0)->setField("$content", arg1);
