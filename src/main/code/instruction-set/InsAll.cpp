@@ -193,5 +193,9 @@ InsAll::InsAll(p<JavaClasses> classes)
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
            });
-         })}
+         })},
+        {0x4B, fromStackToLocal(0)},
+        {0x4C, fromStackToLocal(1)},
+        {0x4D, fromStackToLocal(2)},
+        {0x4E, fromStackToLocal(3)},
       }) {}
