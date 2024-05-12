@@ -21,6 +21,7 @@
 #include "tool/mergeBytes.hpp"
 #include "tool/valueOfConstant.hpp"
 #include "tool/verifyConstant.hpp"
+#include <algorithm>
 #include <cstdint>
 #include <functional>
 #include <iterator>
@@ -146,6 +147,21 @@ p<InstructionSet> jumpIf(std::function<bool(p<JavaObject>)> comparator) {
   return jumpIf([=](p<JavaValue> x) {
     return comparator(std::get<p<JavaObject>>(*x));
   });
+}
+
+template <class R, class A, class B>
+p<InstructionSet> calc(std::function<R(A, B)> action) {
+  return stackInstruction([=](p<Context> context) {
+    auto stack = context->stack();
+    auto value2 = std::get<B>(*stack->pop());
+    auto value1 = std::get<A>(*stack->pop());
+    stack->push(make<JavaValue>(action(std::move(value1), std::move(value2))));
+  });
+}
+
+p<InstructionSet> calc(auto action) {
+  std::function func = std::move(action);
+  return calc(func);
 }
 
 InsAll::InsAll(p<JavaClasses> classes)
@@ -282,6 +298,10 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x0D, loadValue(float(2))},
         {0x0E, loadValue(double(0))},
         {0x0F, loadValue(double(1))},
+        {0x60, calc([](std::int32_t a, std::int32_t b) { return a + b; })},
+        {0x61, calc([](std::int64_t a, std::int64_t b) { return a + b; })},
+        {0x62, calc([](float a, float b) { return a + b; })},
+        {0x63, calc([](double a, double b) { return a + b; })},
         {0x99, jumpIf([](std::int32_t value) { return value == 0; })},
         {0x9A, jumpIf([](std::int32_t value) { return value != 0; })},
         {0x9B, jumpIf([](std::int32_t value) { return value < 0; })},
