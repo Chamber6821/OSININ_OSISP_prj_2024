@@ -1,5 +1,6 @@
 #include "InsAll.hpp"
 #include "class-file/constant/CoClass.hpp"
+#include "class-file/constant/CoFieldRef.hpp"
 #include "class-file/constant/CoInterfaceMethodRef.hpp"
 #include "class-file/constant/CoMethodRef.hpp"
 #include "class-file/constant/pool/ConstantPool.hpp"
@@ -181,4 +182,16 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x2B, fromLocalToStack(1)},
         {0x2C, fromLocalToStack(2)},
         {0x2D, fromLocalToStack(3)},
+        {0xB5, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
+           auto fileName =
+             verifyConstant<CoFieldRef>(pool->at(mergeBytes(bytes[0], bytes[1]))
+             )
+               ->type()
+               ->type()
+               ->value();
+           return make<Code::Wrap>([=](p<Context> context) {
+             jumpForward(context->instructionPointer(), 3);
+             return Code::Next{};
+           });
+         })}
       }) {}
