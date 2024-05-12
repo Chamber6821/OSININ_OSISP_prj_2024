@@ -136,9 +136,10 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
-        {0x3C, stackInstruction([](p<Context> context) {
-           context->locals()->put(1, context->stack()->pop());
-         })},
+        {0x3B, fromStackToLocal(0)},
+        {0x3C, fromStackToLocal(1)},
+        {0x3D, fromStackToLocal(2)},
+        {0x3E, fromStackToLocal(3)},
         {0xBB, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto type = classes->type(
              verifyConstant<CoClass>(pool->at(mergeBytes(bytes[0], bytes[1])))
