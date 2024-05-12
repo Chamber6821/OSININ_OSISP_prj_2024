@@ -3,10 +3,12 @@
 #include "code/Code.hpp"
 #include "code/MethodReference.hpp"
 #include "code/context/Context.hpp"
+#include "execution/task/JavaTask.hpp"
 #include "execution/task/Task.hpp"
 #include "java/class/JavaClass.hpp"
 #include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
+#include "java/value/JvsAutoExtendable.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/Iterable.hpp"
@@ -39,6 +41,20 @@ public:
           return Code::ReturnVoid{};
         context->instructionPointer()->gotoAddress(1);
         return Code::ExecuteTasks{.tasks = make<Iterable<p<Task>>::Empty>()};
+      });
+    if (reference.equal("launch", "(Ljava/lang/Runnable;)V"))
+      return make<Code::Wrap>([](p<Context> context, auto) -> Code::Result {
+        if (context->instructionPointer()->address() > 0)
+          return Code::ReturnVoid{};
+        context->instructionPointer()->gotoAddress(1);
+        auto object = std::get<p<JavaObject>>(*context->locals()->at(0));
+        return Code::ExecuteTasks{
+          .tasks = make<Iterable<p<Task>>::Single>(make<JavaTask>(Code::Call{
+            .type = object->type(),
+            .method = {.name = "run", .signature = "()V"},
+            .arguments = make<JvsAutoExtendable>()
+          }))
+        };
       });
     throw std::runtime_error(
       std::format("Class {} has no method {}", name(), reference)
