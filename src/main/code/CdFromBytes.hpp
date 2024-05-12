@@ -7,6 +7,9 @@
 #include "java/object/JavaObject.hpp"
 #include "p.hpp"
 #include <cstdint>
+#include <exception>
+#include <format>
+#include <stdexcept>
 #include <variant>
 #include <vector>
 
@@ -23,7 +26,7 @@ public:
       : bytes(std::move(bytes)), pool(std::move(pool)),
         instructionSet(std::move(instructionSet)) {}
 
-  Result result(p<Context> context, p<JavaObject>) const override {
+  Result result(p<Context> context, p<JavaObject>) const override try {
     Result result = Next{};
     while (std::holds_alternative<Next>(result)) {
       result = instructionSet
@@ -35,5 +38,11 @@ public:
                  ->result(context);
     }
     return result;
+  } catch (...) {
+
+    std::throw_with_nested(std::runtime_error(std::format(
+      "Failed while execute instruction {:X}",
+      bytes.begin()[context->instructionPointer()->address()]
+    )));
   }
 };
