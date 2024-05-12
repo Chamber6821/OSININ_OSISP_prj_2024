@@ -23,9 +23,9 @@ public class PrimeNumbers {
     }
 
     public void run() {
+      if (number < 2) return;
       for (int i = 2; i * i < number; i++)
-        if (number % i == 0)
-          return;
+        if (number % i == 0) return;
       Runtime.stdout().put(String.format("Prime: %d\n", number));
       waitGroup.done();
     }
@@ -34,14 +34,10 @@ public class PrimeNumbers {
   static class WaitGroup {
     private int tasks;
 
-    public WaitGroup(int tasks) {
-      this.tasks = tasks;
-    }
+    public WaitGroup(int tasks) { this.tasks = tasks; }
 
     public void done() {
-      synchronized (this) {
-        tasks--;
-      }
+      synchronized (this) { tasks--; }
     }
 
     public void waitAll() {
