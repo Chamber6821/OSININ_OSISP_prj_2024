@@ -12,6 +12,7 @@
 #include "code/instruction-set/InsWrap.hpp"
 #include "code/instruction-set/InstructionSet.hpp"
 #include "java/class/JavaClasses.hpp"
+#include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
 #include "java/value/JvsAutoExtendable.hpp"
@@ -20,6 +21,7 @@
 #include "tool/mergeBytes.hpp"
 #include "tool/valueOfConstant.hpp"
 #include "tool/verifyConstant.hpp"
+#include <cstdint>
 #include <functional>
 #include <iterator>
 #include <regex>
@@ -88,6 +90,62 @@ p<InstructionSet> loadValue(p<JavaValue> value) {
 p<InstructionSet> loadValue(auto value) {
   auto ptr = make<JavaValue>(std::move(value));
   return loadValue(ptr);
+}
+
+p<InstructionSet>
+jumpIf(std::function<bool(p<JavaValue> a, p<JavaValue> b)> comparator) {
+  return make<InsWrap>([=](auto bytes, auto) {
+    auto offset = std::int16_t(mergeBytes(bytes[0], bytes[1]));
+    return make<Code::Wrap>([=](p<Context> context) {
+      auto value2 = context->stack()->pop();
+      auto value1 = context->stack()->pop();
+      jumpForward(
+        context->instructionPointer(),
+        comparator(std::move(value1), std::move(value2)) ? offset : 3
+      );
+      return Code::Next{};
+    });
+  });
+}
+
+p<InstructionSet>
+jumpIf(std::function<bool(std::int32_t a, std::int32_t b)> comparator) {
+  return jumpIf([=](p<JavaValue> a, p<JavaValue> b) {
+    return comparator(std::get<std::int32_t>(*a), std::get<std::int32_t>(*b));
+  });
+}
+
+p<InstructionSet>
+jumpIf(std::function<bool(p<JavaObject> a, p<JavaObject> b)> comparator) {
+  return jumpIf([=](p<JavaValue> a, p<JavaValue> b) {
+    return comparator(std::get<p<JavaObject>>(*a), std::get<p<JavaObject>>(*b));
+  });
+}
+
+p<InstructionSet> jumpIf(std::function<bool(p<JavaValue>)> comparator) {
+  return make<InsWrap>([=](auto bytes, auto) {
+    auto offset = std::int16_t(mergeBytes(bytes[0], bytes[1]));
+    return make<Code::Wrap>([=](p<Context> context) {
+      auto value = context->stack()->pop();
+      jumpForward(
+        context->instructionPointer(),
+        comparator(std::move(value)) ? offset : 3
+      );
+      return Code::Next{};
+    });
+  });
+}
+
+p<InstructionSet> jumpIf(std::function<bool(std::int32_t)> comparator) {
+  return jumpIf([=](p<JavaValue> x) {
+    return comparator(std::get<std::int32_t>(*x));
+  });
+}
+
+p<InstructionSet> jumpIf(std::function<bool(p<JavaObject>)> comparator) {
+  return jumpIf([=](p<JavaValue> x) {
+    return comparator(std::get<p<JavaObject>>(*x));
+  });
 }
 
 InsAll::InsAll(p<JavaClasses> classes)
@@ -224,4 +282,20 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x0D, loadValue(float(2))},
         {0x0E, loadValue(double(0))},
         {0x0F, loadValue(double(1))},
+        {0x99, jumpIf([](std::int32_t value) { return value == 0; })},
+        {0x9A, jumpIf([](std::int32_t value) { return value != 0; })},
+        {0x9B, jumpIf([](std::int32_t value) { return value < 0; })},
+        {0x9C, jumpIf([](std::int32_t value) { return value >= 0; })},
+        {0x9D, jumpIf([](std::int32_t value) { return value > 0; })},
+        {0x9E, jumpIf([](std::int32_t value) { return value <= 0; })},
+        {0x9F, jumpIf([](std::int32_t a, std::int32_t b) { return a == b; })},
+        {0xA0, jumpIf([](std::int32_t a, std::int32_t b) { return a != b; })},
+        {0xA1, jumpIf([](std::int32_t a, std::int32_t b) { return a < b; })},
+        {0xA2, jumpIf([](std::int32_t a, std::int32_t b) { return a >= b; })},
+        {0xA3, jumpIf([](std::int32_t a, std::int32_t b) { return a > b; })},
+        {0xA4, jumpIf([](std::int32_t a, std::int32_t b) { return a <= b; })},
+        {0xA5, jumpIf([](p<JavaObject> a, p<JavaObject> b) { return a == b; })},
+        {0xA6, jumpIf([](p<JavaObject> a, p<JavaObject> b) { return a != b; })},
+        {0xC6, jumpIf([](p<JavaObject> a) { return a == nullptr; })},
+        {0xC7, jumpIf([](p<JavaObject> a) { return a != nullptr; })},
       }) {}
