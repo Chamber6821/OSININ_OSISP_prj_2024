@@ -9,6 +9,7 @@
 #include "code/context/instruction-pointer/InstructionPointer.hpp"
 #include "code/context/stack/StackFrame.hpp"
 #include "code/instruction-set/InsWrap.hpp"
+#include "code/instruction-set/InstructionSet.hpp"
 #include "java/class/JavaClasses.hpp"
 #include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
@@ -18,6 +19,7 @@
 #include "tool/mergeBytes.hpp"
 #include "tool/valueOfConstant.hpp"
 #include "tool/verifyConstant.hpp"
+#include <functional>
 #include <iterator>
 #include <regex>
 
@@ -40,7 +42,7 @@ void jumpForward(p<InstructionPointer> pointer, int offset) {
 p<JavaValues> popArguments(p<StackFrame> stack, int count) {
   auto arguments = make<JvsVector>(count);
   for (int i = count - 1; i >= 0; i--) {
-    *arguments->at(i) = *stack->pop();
+    arguments->put(i, stack->pop());
   }
   return arguments;
 }
@@ -51,6 +53,17 @@ MethodReference referenceOf(p<TConstant> constant) {
     .name = constant->type()->name()->value(),
     .signature = constant->type()->type()->value()
   };
+}
+
+p<InstructionSet>
+stackInstruction(std::function<void(p<Context> context)> action) {
+  return make<InsWrap>([=](auto, auto) {
+    return make<Code::Wrap>([=](p<Context> context, auto) {
+      jumpForward(context->instructionPointer(), 1);
+      action(std::move(context));
+      return Code::Next{};
+    });
+  });
 }
 
 InsAll::InsAll(p<JavaClasses> classes)
@@ -111,12 +124,8 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
-        {0x3C, make<InsWrap>([](auto, auto) {
-           return make<Code::Wrap>([](p<Context> context, auto) {
-             *context->locals()->at(1) = *context->stack()->pop();
-             jumpForward(context->instructionPointer(), 1);
-             return Code::Next{};
-           });
+        {0x3C, stackInstruction([](p<Context> context) {
+           context->locals()->put(1, context->stack()->pop());
          })},
         {0xBB, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto type = classes->type(
@@ -130,20 +139,12 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
-        {0x59, make<InsWrap>([=](auto, auto) {
-           return make<Code::Wrap>([=](p<Context> context, auto) {
-             auto value = context->stack()->pop();
-             context->stack()->push(value);
-             context->stack()->push(value);
-             jumpForward(context->instructionPointer(), 1);
-             return Code::Next{};
-           });
+        {0x59, stackInstruction([](p<Context> context) {
+           auto value = context->stack()->pop();
+           context->stack()->push(value);
+           context->stack()->push(value);
          })},
-        {0x1B, make<InsWrap>([=](auto, auto) {
-           return make<Code::Wrap>([=](p<Context> context, auto) {
-             context->stack()->push(context->locals()->at(1));
-             jumpForward(context->instructionPointer(), 1);
-             return Code::Next{};
-           });
+        {0x1B, stackInstruction([](p<Context> context) {
+           context->stack()->push(context->locals()->at(1));
          })}
       }) {}
