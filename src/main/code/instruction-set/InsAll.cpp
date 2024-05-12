@@ -126,7 +126,7 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0xB1, make<InsWrap>([](auto, auto) {
            return make<Code::Wrap>([](auto) { return Code::ReturnVoid{}; });
          })},
-        {0x11, make<InsWrap>([](auto bytes) {
+        {0x11, make<InsWrap>([](auto bytes, auto) {
            auto constant =
              make<JavaValue>(std::int32_t(mergeBytes(bytes[0], bytes[1])));
            return make<Code::Wrap>([=](p<Context> context) {
