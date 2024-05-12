@@ -58,9 +58,13 @@ public:
   Wrap(auto implementation) : implementation(std::move(implementation)) {}
 
   Wrap(std::function<Result(p<Context>)> implementation)
-      : Wrap([implementation = std::move(implementation)](auto context, auto) {
-          return implementation(std::move(context));
-        }) {}
+      : Wrap(
+          [implementation = std::move(implementation
+           )](auto context, auto exception) -> Result {
+            if (exception) return Throw{std::move(exception)};
+            return implementation(std::move(context));
+          }
+        ) {}
 
   Result result(p<Context> context, p<JavaObject> exception) const override {
     return implementation(std::move(context), std::move(exception));
