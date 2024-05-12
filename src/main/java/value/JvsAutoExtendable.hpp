@@ -3,9 +3,10 @@
 
 #include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
-#include "make.hpp"
 #include "p.hpp"
+#include <format>
 #include <map>
+#include <stdexcept>
 
 class JvsAutoExtendable : public JavaValues {
   mutable std::map<int, p<JavaValue>> cells;
@@ -17,7 +18,10 @@ public:
   JvsAutoExtendable() : JvsAutoExtendable(std::map<int, p<JavaValue>>{}) {}
 
   p<JavaValue> at(int index) const override {
-    if (not cells.contains(index)) cells[index] = make<JavaValue>();
+    if (not cells.contains(index))
+      throw std::runtime_error(
+        std::format("Cell with index {} not defined", index)
+      );
     return cells.at(index);
   }
 
