@@ -38,7 +38,7 @@ class JavaTask : public Task, public std::enable_shared_from_this<Task> {
 
     void operator()(Code::Call call) try {
       that->stack.emplace(
-        call.type->methodCode(std::move(call.method)),
+        call.type->methodCode(call.method),
         make<CxWrap>(
           make<IpSimple>(),
           make<SfUnlimited>(),
