@@ -58,7 +58,7 @@ MethodReference referenceOf(p<TConstant> constant) {
 p<InstructionSet>
 stackInstruction(std::function<void(p<Context> context)> action) {
   return make<InsWrap>([=](auto, auto) {
-    return make<Code::Wrap>([=](p<Context> context, auto) {
+    return make<Code::Wrap>([=](p<Context> context) {
       jumpForward(context->instructionPointer(), 1);
       action(std::move(context));
       return Code::Next{};
@@ -86,7 +86,7 @@ InsAll::InsAll(p<JavaClasses> classes)
              ));
            auto methodRef = referenceOf(method);
            auto type = classes->type(method->clazz()->name()->value());
-           return make<Code::Wrap>([=](p<Context> context, auto) {
+           return make<Code::Wrap>([=](p<Context> context) {
              jumpForward(context->instructionPointer(), 3);
              return Code::Call{
                .type = type,
@@ -100,7 +100,7 @@ InsAll::InsAll(p<JavaClasses> classes)
          })},
         {0x12, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto constant = valueOfConstant(pool->at(bytes[0]), classes);
-           return make<Code::Wrap>([=](p<Context> context, auto) {
+           return make<Code::Wrap>([=](p<Context> context) {
              context->stack()->push(constant);
              jumpForward(context->instructionPointer(), 2);
              return Code::Next{};
@@ -110,7 +110,7 @@ InsAll::InsAll(p<JavaClasses> classes)
            auto methodRef = referenceOf(verifyConstant<CoInterfaceMethodRef>(
              pool->at(mergeBytes(bytes[0], bytes[1]))
            ));
-           return make<Code::Wrap>([=](p<Context> context, auto) {
+           return make<Code::Wrap>([=](p<Context> context) {
              auto arguments = popArguments(
                context->stack(),
                countArguments(methodRef.signature) + 1
@@ -124,13 +124,12 @@ InsAll::InsAll(p<JavaClasses> classes)
            });
          })},
         {0xB1, make<InsWrap>([](auto, auto) {
-           return make<Code::Wrap>([](auto, auto) { return Code::ReturnVoid{}; }
-           );
+           return make<Code::Wrap>([](auto) { return Code::ReturnVoid{}; });
          })},
-        {0x11, make<InsWrap>([](auto bytes, auto) {
+        {0x11, make<InsWrap>([](auto bytes) {
            auto constant =
              make<JavaValue>(std::int32_t(mergeBytes(bytes[0], bytes[1])));
-           return make<Code::Wrap>([=](p<Context> context, auto) {
+           return make<Code::Wrap>([=](p<Context> context) {
              context->stack()->push(constant);
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
@@ -146,7 +145,7 @@ InsAll::InsAll(p<JavaClasses> classes)
                ->name()
                ->value()
            );
-           return make<Code::Wrap>([=](p<Context> context, auto) {
+           return make<Code::Wrap>([=](p<Context> context) {
              context->stack()->push(make<JavaValue>(type->newObject(type)));
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
@@ -165,7 +164,7 @@ InsAll::InsAll(p<JavaClasses> classes)
            auto methodRef = referenceOf(verifyConstant<CoMethodRef>(
              pool->at(mergeBytes(bytes[0], bytes[1]))
            ));
-           return make<Code::Wrap>([=](p<Context> context, auto) {
+           return make<Code::Wrap>([=](p<Context> context) {
              auto arguments = popArguments(
                context->stack(),
                countArguments(methodRef.signature) + 1
