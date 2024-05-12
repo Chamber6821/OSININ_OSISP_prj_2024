@@ -20,4 +20,8 @@ public:
     if (not cells.contains(index)) cells[index] = make<JavaValue>();
     return cells.at(index);
   }
+
+  void put(int index, p<JavaValue> value) override {
+    cells[index] = std::move(value);
+  }
 };
