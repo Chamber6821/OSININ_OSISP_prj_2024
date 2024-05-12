@@ -138,5 +138,12 @@ InsAll::InsAll(p<JavaClasses> classes)
              jumpForward(context->instructionPointer(), 1);
              return Code::Next{};
            });
+         })},
+        {0x1B, make<InsWrap>([=](auto, auto) {
+           return make<Code::Wrap>([=](p<Context> context, auto) {
+             context->stack()->push(context->locals()->at(1));
+             jumpForward(context->instructionPointer(), 1);
+             return Code::Next{};
+           });
          })}
       }) {}
