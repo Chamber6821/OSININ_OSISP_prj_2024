@@ -178,4 +178,8 @@ InsAll::InsAll(p<JavaClasses> classes)
              };
            });
          })},
+        {0x2A, fromLocalToStack(0)},
+        {0x2B, fromLocalToStack(1)},
+        {0x2C, fromLocalToStack(2)},
+        {0x2D, fromLocalToStack(3)},
       }) {}
