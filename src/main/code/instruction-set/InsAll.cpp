@@ -79,6 +79,17 @@ p<InstructionSet> fromLocalToStack(int index) {
   });
 }
 
+p<InstructionSet> loadValue(p<JavaValue> value) {
+  return stackInstruction([=](p<Context> context) {
+    context->stack()->push(value);
+  });
+}
+
+p<InstructionSet> loadValue(auto value) {
+  auto ptr = make<JavaValue>(std::move(value));
+  return loadValue(ptr);
+}
+
 InsAll::InsAll(p<JavaClasses> classes)
     : InsMappedByOpcode(std::map<std::uint8_t, p<InstructionSet>>{
         {0xB8, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
@@ -198,4 +209,19 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x4C, fromStackToLocal(1)},
         {0x4D, fromStackToLocal(2)},
         {0x4E, fromStackToLocal(3)},
+        {0x01, loadValue(nullptr)},
+        {0x02, loadValue(std::int32_t(-1))},
+        {0x03, loadValue(std::int32_t(0))},
+        {0x04, loadValue(std::int32_t(1))},
+        {0x05, loadValue(std::int32_t(2))},
+        {0x06, loadValue(std::int32_t(3))},
+        {0x07, loadValue(std::int32_t(4))},
+        {0x08, loadValue(std::int32_t(5))},
+        {0x09, loadValue(std::int64_t(0))},
+        {0x0A, loadValue(std::int64_t(1))},
+        {0x0B, loadValue(float(0))},
+        {0x0C, loadValue(float(1))},
+        {0x0D, loadValue(float(2))},
+        {0x0E, loadValue(double(0))},
+        {0x0F, loadValue(double(1))},
       }) {}
