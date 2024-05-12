@@ -146,5 +146,22 @@ InsAll::InsAll(p<JavaClasses> classes)
          })},
         {0x1B, stackInstruction([](p<Context> context) {
            context->stack()->push(context->locals()->at(1));
-         })}
+         })},
+        {0xB7, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
+           auto methodRef = referenceOf(verifyConstant<CoMethodRef>(
+             pool->at(mergeBytes(bytes[0], bytes[1]))
+           ));
+           return make<Code::Wrap>([=](p<Context> context, auto) {
+             auto arguments = popArguments(
+               context->stack(),
+               countArguments(methodRef.signature) + 1
+             );
+             jumpForward(context->instructionPointer(), 3);
+             return Code::Call{
+               .type = std::get<p<JavaObject>>(*arguments->at(0))->type(),
+               .method = methodRef,
+               .arguments = arguments,
+             };
+           });
+         })},
       }) {}
