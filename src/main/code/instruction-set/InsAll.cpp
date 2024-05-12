@@ -255,6 +255,21 @@ InsAll::InsAll(p<JavaClasses> classes)
              };
            });
          })},
+        {0xB4, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
+           auto fieldName =
+             verifyConstant<CoFieldRef>(pool->at(mergeBytes(bytes[0], bytes[1]))
+             )
+               ->type()
+               ->type()
+               ->value();
+           return make<Code::Wrap>([=](p<Context> context) {
+             auto stack = context->stack();
+             auto object = std::get<p<JavaObject>>(*stack->pop());
+             stack->push(object->field(fieldName));
+             jumpForward(context->instructionPointer(), 3);
+             return Code::Next{};
+           });
+         })},
         {0xB5, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto fieldName =
              verifyConstant<CoFieldRef>(pool->at(mergeBytes(bytes[0], bytes[1]))
