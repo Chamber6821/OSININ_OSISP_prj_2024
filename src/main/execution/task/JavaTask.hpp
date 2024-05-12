@@ -6,7 +6,6 @@
 #include "code/context/instruction-pointer/IpSimple.hpp"
 #include "code/context/stack/SfUnlimited.hpp"
 #include "execution/task/Task.hpp"
-#include "java/value/JvsAutoExtendable.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/Iterable.hpp"
