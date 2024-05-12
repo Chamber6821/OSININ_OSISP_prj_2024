@@ -23,6 +23,7 @@
 #include "tool/verifyConstant.hpp"
 #include <algorithm>
 #include <cstdint>
+#include <format>
 #include <functional>
 #include <iterator>
 #include <regex>
@@ -162,6 +163,25 @@ p<InstructionSet> calc(std::function<R(A, B)> action) {
 p<InstructionSet> calc(auto action) {
   std::function func = std::move(action);
   return calc(func);
+}
+
+p<InstructionSet> loadFromArray() {
+  return stackInstruction([](p<Context> context) {
+    auto stack = context->stack();
+    auto index = std::get<std::int32_t>(*stack->pop());
+    auto array = std::get<p<JavaObject>>(*stack->pop());
+    stack->push(array->field(std::format("${}", index)));
+  });
+}
+
+p<InstructionSet> storeToArray() {
+  return stackInstruction([](p<Context> context) {
+    auto stack = context->stack();
+    auto value = stack->pop();
+    auto index = std::get<std::int32_t>(*stack->pop());
+    auto array = std::get<p<JavaObject>>(*stack->pop());
+    array->setField(std::format("${}", index), std::move(value));
+  });
 }
 
 InsAll::InsAll(p<JavaClasses> classes)
@@ -309,6 +329,14 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x2B, fromLocalToStack(1)},
         {0x2C, fromLocalToStack(2)},
         {0x2D, fromLocalToStack(3)},
+        {0x2E, loadFromArray()},
+        {0x2F, loadFromArray()},
+        {0x30, loadFromArray()},
+        {0x31, loadFromArray()},
+        {0x32, loadFromArray()},
+        {0x33, loadFromArray()},
+        {0x34, loadFromArray()},
+        {0x35, loadFromArray()},
         {0x3B, fromStackToLocal(0)},
         {0x3C, fromStackToLocal(1)},
         {0x3D, fromStackToLocal(2)},
@@ -317,6 +345,14 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x4C, fromStackToLocal(1)},
         {0x4D, fromStackToLocal(2)},
         {0x4E, fromStackToLocal(3)},
+        {0x4F, storeToArray()},
+        {0x50, storeToArray()},
+        {0x51, storeToArray()},
+        {0x52, storeToArray()},
+        {0x53, storeToArray()},
+        {0x54, storeToArray()},
+        {0x55, storeToArray()},
+        {0x56, storeToArray()},
         {0x60, calc([](std::int32_t a, std::int32_t b) { return a + b; })},
         {0x61, calc([](std::int64_t a, std::int64_t b) { return a + b; })},
         {0x62, calc([](float a, float b) { return a + b; })},
