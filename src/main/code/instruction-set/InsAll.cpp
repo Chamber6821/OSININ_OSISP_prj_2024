@@ -238,6 +238,20 @@ p<InstructionSet> invokeMethod(int instructionLength) {
   });
 }
 
+p<InstructionSet> returnVoid() {
+  return make<InsWrap>([](auto, auto) {
+    return make<Code::Wrap>([](auto) { return Code::ReturnVoid{}; });
+  });
+}
+
+p<InstructionSet> returnValue() {
+  return make<InsWrap>([](auto, auto) {
+    return make<Code::Wrap>([](p<Context> context) {
+      return Code::ReturnValue{context->stack()->pop()};
+    });
+  });
+}
+
 InsAll::InsAll(p<JavaClasses> classes)
     : InsMappedByOpcode(std::map<std::uint8_t, p<InstructionSet>>{
         {0x12, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
@@ -247,9 +261,6 @@ InsAll::InsAll(p<JavaClasses> classes)
              jumpForward(context->instructionPointer(), 2);
              return Code::Next{};
            });
-         })},
-        {0xB1, make<InsWrap>([](auto, auto) {
-           return make<Code::Wrap>([](auto) { return Code::ReturnVoid{}; });
          })},
         {0x11, make<InsWrap>([](auto bytes, auto) {
            auto constant =
@@ -399,6 +410,12 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
+        {0xAC, returnValue()},
+        {0xAD, returnValue()},
+        {0xAE, returnValue()},
+        {0xAF, returnValue()},
+        {0xB0, returnValue()},
+        {0xB1, returnVoid()},
         {0xB6, invokeMethod<CoMethodRef>(3)},
         {0xB7, invokeMethod<CoMethodRef>(3)},
         {0xB8, invokeStaticMethod(classes, 3)},
