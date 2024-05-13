@@ -61,15 +61,28 @@ MethodReference referenceOf(p<TConstant> constant) {
   };
 }
 
-p<InstructionSet>
-stackInstruction(std::function<void(p<Context> context)> action) {
+template <class T>
+p<InstructionSet> stackInstruction(
+  std::function<T(p<Context>)> action, int instructionLength = 1
+) {
   return make<InsWrap>([=](auto, auto) {
     return make<Code::Wrap>([=](p<Context> context) {
-      jumpForward(context->instructionPointer(), 1);
-      action(std::move(context));
-      return Code::Next{};
+      jumpForward(context->instructionPointer(), instructionLength);
+      return action(std::move(context));
     });
   });
+}
+
+p<InstructionSet> stackInstruction(
+  std::function<void(p<Context>)> action, int instructionLength = 1
+) {
+  return stackInstruction<Code::Next>(
+    [=](p<Context> context) {
+      action(std::move(context));
+      return Code::Next{};
+    },
+    instructionLength
+  );
 }
 
 p<InstructionSet> fromStackToLocal(int index) {
@@ -455,6 +468,18 @@ InsAll::InsAll(p<JavaClasses> classes)
            context->stack()->push(
              std::get<p<JavaObject>>(*context->stack()->pop())->field("$length")
            );
+         })},
+        {0xC2, stackInstruction([=](p<Context> context) -> Code::Result {
+           if (std::get<p<JavaObject>>(*context->stack()->pop())->tryLock())
+             return Code::Next{};
+           return Code::Call{
+             .type = classes->type("core/Runtime"),
+             .method = {.name = "suspend", .signature = "()V"},
+             .arguments = make<JvsAutoExtendable>()
+           };
+         })},
+        {0xC3, stackInstruction([](p<Context> context) {
+           std::get<p<JavaObject>>(*context->stack()->pop())->unlock();
          })},
         {0xC6, jumpIf([](p<JavaObject> a) { return a == nullptr; })},
         {0xC7, jumpIf([](p<JavaObject> a) { return a != nullptr; })},
