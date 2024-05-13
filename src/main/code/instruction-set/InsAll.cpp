@@ -22,6 +22,7 @@
 #include "tool/valueOfConstant.hpp"
 #include "tool/verifyConstant.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <format>
 #include <functional>
@@ -391,6 +392,10 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x69, calc([](std::int64_t a, std::int64_t b) { return a * b; })},
         {0x6A, calc([](float a, float b) { return a * b; })},
         {0x6B, calc([](double a, double b) { return a * b; })},
+        {0x70, calc([](std::int32_t a, std::int32_t b) { return a % b; })},
+        {0x71, calc([](std::int64_t a, std::int64_t b) { return a % b; })},
+        {0x72, calc([](float a, float b) { return std::fmod(a, b); })},
+        {0x73, calc([](double a, double b) { return std::fmod(a, b); })},
         {0x84, make<InsWrap>([](auto bytes, auto) {
            auto localIndex = bytes[0];
            auto delta = std::int8_t(bytes[1]);
