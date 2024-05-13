@@ -13,6 +13,14 @@ public class PrimeNumbers {
     Runtime.stdout().put("Done!\n");
   }
 
+  static String join(String... strings) {
+    var arrayOfBytes = new byte[strings.length][];
+    for (int i = 0; i < strings.length; i++) {
+      arrayOfBytes[i] = strings[i].getBytes();
+    }
+    return new String(Runtime.join(arrayOfBytes));
+  }
+
   static class Task implements Runnable {
     private int number;
     private WaitGroup waitGroup;
@@ -23,10 +31,13 @@ public class PrimeNumbers {
     }
 
     public void run() {
-      if (number < 2) return;
+      if (number < 2)
+        return;
       for (int i = 2; i * i < number; i++)
-        if (number % i == 0) return;
-      Runtime.stdout().put(Runtime.join("Prime: ", number, "\n"));
+        if (number % i == 0)
+          return;
+      Runtime.stdout().put(
+          join("Prime: ", Integer.valueOf(number).toString(), "\n"));
       waitGroup.done();
     }
   }
@@ -34,10 +45,14 @@ public class PrimeNumbers {
   static class WaitGroup {
     private int tasks;
 
-    public WaitGroup(int tasks) { this.tasks = tasks; }
+    public WaitGroup(int tasks) {
+      this.tasks = tasks;
+    }
 
     public void done() {
-      synchronized (this) { tasks--; }
+      synchronized (this) {
+        tasks--;
+      }
     }
 
     public void waitAll() {
