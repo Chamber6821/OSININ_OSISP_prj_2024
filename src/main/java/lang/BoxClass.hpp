@@ -35,8 +35,7 @@ public:
         auto object =
           newObject(std::const_pointer_cast<BoxClass>(shared_from_this()));
         object->setField("$content", context->locals()->at(0));
-        context->stack()->push(make<JavaValue>(std::move(object)));
-        return Code::ReturnValue{make<JavaValue>(nullptr)};
+        return Code::ReturnValue{make<JavaValue>(std::move(object))};
       });
     return super->methodCode(std::move(method));
   } catch (...) {
