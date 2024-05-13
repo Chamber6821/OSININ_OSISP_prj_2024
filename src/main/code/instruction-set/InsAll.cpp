@@ -377,6 +377,21 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x69, calc([](std::int64_t a, std::int64_t b) { return a * b; })},
         {0x6A, calc([](float a, float b) { return a * b; })},
         {0x6B, calc([](double a, double b) { return a * b; })},
+        {0x84, make<InsWrap>([](auto bytes, auto) {
+           auto localIndex = bytes[0];
+           auto delta = std::int8_t(bytes[1]);
+           return make<Code::Wrap>([=](p<Context> context) {
+             context->locals()->put(
+               localIndex,
+               make<JavaValue>(
+                 delta +
+                 std::get<std::int32_t>(*context->locals()->at(localIndex))
+               )
+             );
+             jumpForward(context->instructionPointer(), 3);
+             return Code::Next{};
+           });
+         })},
         {0x99, jumpIf([](std::int32_t value) { return value == 0; })},
         {0x9A, jumpIf([](std::int32_t value) { return value != 0; })},
         {0x9B, jumpIf([](std::int32_t value) { return value < 0; })},
