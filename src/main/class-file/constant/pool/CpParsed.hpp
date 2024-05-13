@@ -14,6 +14,7 @@
 #include "class-file/constant/Constant.hpp"
 #include "class-file/constant/pool/ConstantPool.hpp"
 #include "class-file/constant/pool/CpMutable.hpp"
+#include "class-file/constant/pool/CpWeakWrap.hpp"
 #include "class-file/parser/Parser.hpp"
 #include "class-file/parser/PsCast.hpp"
 #include "class-file/parser/PsVariant.hpp"
@@ -44,18 +45,20 @@ class CpParsed : public ConstantPool {
 
 public:
   CpParsed(std::istream &in) {
+    auto wrap = make<CpWeakWrap>(cp);
     auto parser = PsVariant(std::vector<p<Parser<p<Constant>>>>{
       make<upCast<CoUtf8>>(make<CoUtf8Parser>()),
       make<upCast<CoInteger>>(make<CoIntegerParser>()),
       make<upCast<CoFloat>>(make<CoFloatParser>()),
       make<upCast<CoLong>>(make<CoLongParser>()),
       make<upCast<CoDouble>>(make<CoDoubleParser>()),
-      make<upCast<CoClass>>(make<CoClassParser>(cp)),
-      make<upCast<CoString>>(make<CoStringParser>(cp)),
-      make<upCast<CoFieldRef>>(make<CoFieldRefParser>(cp)),
-      make<upCast<CoMethodRef>>(make<CoMethodRefParser>(cp)),
-      make<upCast<CoInterfaceMethodRef>>(make<CoInterfaceMethodRefParser>(cp)),
-      make<upCast<CoNameAndType>>(make<CoNameAndTypeParser>(cp))
+      make<upCast<CoClass>>(make<CoClassParser>(wrap)),
+      make<upCast<CoString>>(make<CoStringParser>(wrap)),
+      make<upCast<CoFieldRef>>(make<CoFieldRefParser>(wrap)),
+      make<upCast<CoMethodRef>>(make<CoMethodRefParser>(wrap)),
+      make<upCast<CoInterfaceMethodRef>>(make<CoInterfaceMethodRefParser>(wrap)
+      ),
+      make<upCast<CoNameAndType>>(make<CoNameAndTypeParser>(wrap))
     });
     std::uint16_t count;
     readInt(in, count);
