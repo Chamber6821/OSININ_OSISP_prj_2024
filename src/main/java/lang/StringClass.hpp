@@ -22,7 +22,7 @@ public:
   }
 
   p<Code> methodCode(MethodReference reference) const override {
-    if (reference.equal("<init>", "([char;)V"))
+    if (reference.equal("<init>", "([B)V"))
       return make<Code::Wrap>([&](p<Context> context, auto) {
         auto arguments = context->locals();
         auto arg0 = arguments->at(0);
