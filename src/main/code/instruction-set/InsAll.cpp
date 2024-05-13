@@ -443,7 +443,7 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
-        {0xBC, stackInstruction([](p<Context> context) {
+        {0xBE, stackInstruction([](p<Context> context) {
            context->stack()->push(
              std::get<p<JavaObject>>(*context->stack()->pop())->field("$length")
            );
