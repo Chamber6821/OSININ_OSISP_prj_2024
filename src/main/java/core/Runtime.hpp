@@ -74,7 +74,7 @@ public:
         auto object = objectClass->newObject(objectClass);
         auto objectLength = 0;
         auto array = std::get<p<JavaObject>>(*context->locals()->at(0));
-        auto arrayLength = std::get<std::int32_t>(*object->field("$length"));
+        auto arrayLength = std::get<std::int32_t>(*array->field("$length"));
         for (int i = 0; i < arrayLength; i++) {
           auto string =
             std::get<p<JavaObject>>(*array->field(std::format("${}", i)));
