@@ -14,14 +14,19 @@
 #include "tool/Iterable.hpp"
 #include <format>
 #include <map>
+#include <memory>
+#include <regex>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 class Runtime : public JavaClass {
   p<JavaObject> stdout;
+  p<JavaClass> objectClass;
 
 public:
-  Runtime(p<JavaObject> stdout) : stdout(std::move(stdout)) {}
+  Runtime(p<JavaObject> stdout, p<JavaClass> objectClass)
+      : stdout(std::move(stdout)), objectClass(std::move(objectClass)) {}
 
   std::string name() const override { return "core/Runtime"; }
 
@@ -59,6 +64,34 @@ public:
             )
           }))
         };
+      });
+    if (reference.name == "join" and
+        std::regex_match(
+          reference.signature,
+          std::regex(R"(\(\[{2}([BCDFIJSZ]|L[^;]+;)\)\[([BCDFIJSZ]|L[^;]+;))")
+        ))
+      return make<Code::Wrap>([this](p<Context> context) {
+        auto object = objectClass->newObject(objectClass);
+        auto objectLength = 0;
+        auto array = std::get<p<JavaObject>>(*context->locals()->at(0));
+        auto arrayLength = std::get<std::int32_t>(*object->field("$length"));
+        for (int i = 0; i < arrayLength; i++) {
+          auto string =
+            std::get<p<JavaObject>>(*array->field(std::format("${}", i)));
+          auto stringLength = std::get<std::int32_t>(*string->field("$length"));
+          for (int j = 0; j < stringLength; j++) {
+            object->setField(
+              std::format("${}", objectLength),
+              string->field(std::format("${}", j))
+            );
+            objectLength++;
+          }
+        }
+        object->setField(
+          "$length",
+          make<JavaValue>(std::int32_t(objectLength))
+        );
+        return Code::ReturnValue{make<JavaValue>(std::move(object))};
       });
     throw std::runtime_error(
       std::format("Class {} has no method {}", name(), reference)
