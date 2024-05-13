@@ -11,4 +11,6 @@ public:
   virtual p<JavaClass> type() const = 0;
   virtual p<JavaValue> field(std::string name) const = 0;
   virtual void setField(std::string name, p<JavaValue> value) = 0;
+  virtual bool tryLock() = 0;
+  virtual void unlock() = 0;
 };
