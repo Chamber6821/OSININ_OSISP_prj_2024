@@ -34,7 +34,7 @@ public class PrimeNumbers {
       try {
         if (number < 2)
           return;
-        for (int i = 2; i * i < number; i++)
+        for (int i = 2; i * i <= number; i++)
           if (number % i == 0)
             return;
         Runtime.stdout().put(
