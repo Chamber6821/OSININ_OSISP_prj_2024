@@ -200,49 +200,52 @@ p<JavaValue> defaultValueForType(int atype) {
   }
 }
 
+p<InstructionSet>
+invokeStaticMethod(p<JavaClasses> classes, int instructionLength) {
+  return make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
+    auto method =
+      verifyConstant<CoMethodRef>(pool->at(mergeBytes(bytes[0], bytes[1])));
+    auto methodRef = referenceOf(method);
+    auto type = classes->type(method->clazz()->name()->value());
+    return make<Code::Wrap>([=](p<Context> context) {
+      jumpForward(context->instructionPointer(), instructionLength);
+      return Code::Call{
+        .type = type,
+        .method = methodRef,
+        .arguments =
+          popArguments(context->stack(), countArguments(methodRef.signature)),
+      };
+    });
+  });
+}
+
+template <class TConstant>
+p<InstructionSet> invokeMethod(int instructionLength) {
+  return make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
+    auto methodRef = referenceOf(
+      verifyConstant<TConstant>(pool->at(mergeBytes(bytes[0], bytes[1])))
+    );
+    return make<Code::Wrap>([=](p<Context> context) {
+      auto arguments =
+        popArguments(context->stack(), countArguments(methodRef.signature) + 1);
+      jumpForward(context->instructionPointer(), instructionLength);
+      return Code::Call{
+        .type = std::get<p<JavaObject>>(*arguments->at(0))->type(),
+        .method = methodRef,
+        .arguments = arguments,
+      };
+    });
+  });
+}
+
 InsAll::InsAll(p<JavaClasses> classes)
     : InsMappedByOpcode(std::map<std::uint8_t, p<InstructionSet>>{
-        {0xB8, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
-           auto method =
-             verifyConstant<CoMethodRef>(pool->at(mergeBytes(bytes[0], bytes[1])
-             ));
-           auto methodRef = referenceOf(method);
-           auto type = classes->type(method->clazz()->name()->value());
-           return make<Code::Wrap>([=](p<Context> context) {
-             jumpForward(context->instructionPointer(), 3);
-             return Code::Call{
-               .type = type,
-               .method = methodRef,
-               .arguments = popArguments(
-                 context->stack(),
-                 countArguments(methodRef.signature)
-               ),
-             };
-           });
-         })},
         {0x12, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto constant = valueOfConstant(pool->at(bytes[0]), classes);
            return make<Code::Wrap>([=](p<Context> context) {
              context->stack()->push(constant);
              jumpForward(context->instructionPointer(), 2);
              return Code::Next{};
-           });
-         })},
-        {0xB9, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
-           auto methodRef = referenceOf(verifyConstant<CoInterfaceMethodRef>(
-             pool->at(mergeBytes(bytes[0], bytes[1]))
-           ));
-           return make<Code::Wrap>([=](p<Context> context) {
-             auto arguments = popArguments(
-               context->stack(),
-               countArguments(methodRef.signature) + 1
-             );
-             jumpForward(context->instructionPointer(), 5);
-             return Code::Call{
-               .type = std::get<p<JavaObject>>(*arguments->at(0))->type(),
-               .method = methodRef,
-               .arguments = arguments,
-             };
            });
          })},
         {0xB1, make<InsWrap>([](auto, auto) {
@@ -273,23 +276,6 @@ InsAll::InsAll(p<JavaClasses> classes)
            auto value = context->stack()->pop();
            context->stack()->push(value);
            context->stack()->push(value);
-         })},
-        {0xB7, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
-           auto methodRef = referenceOf(verifyConstant<CoMethodRef>(
-             pool->at(mergeBytes(bytes[0], bytes[1]))
-           ));
-           return make<Code::Wrap>([=](p<Context> context) {
-             auto arguments = popArguments(
-               context->stack(),
-               countArguments(methodRef.signature) + 1
-             );
-             jumpForward(context->instructionPointer(), 3);
-             return Code::Call{
-               .type = std::get<p<JavaObject>>(*arguments->at(0))->type(),
-               .method = methodRef,
-               .arguments = arguments,
-             };
-           });
          })},
         {0xB4, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto fieldName =
@@ -413,6 +399,11 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
+        {0xB6, invokeMethod<CoMethodRef>(3)},
+        {0xB7, invokeMethod<CoMethodRef>(3)},
+        {0xB8, invokeStaticMethod(classes, 3)},
+        {0xB9, invokeMethod<CoInterfaceMethodRef>(5)},
+        {0xBA, invokeStaticMethod(classes, 5)},
         {0xBC, make<InsWrap>([=](auto bytes, auto) {
            auto value = defaultValueForType(bytes[0]);
            return make<Code::Wrap>([=](p<Context> context) {
