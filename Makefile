@@ -27,12 +27,18 @@ EXECUTABLE_SUFFIX = $(if $(call eq,$(OS),Windows_NT),.exe,)
 APP_EXECUTABLE  = $(CMAKE_BUILD_DIR)/bin/$(APP_TARGET)$(EXECUTABLE_SUFFIX)
 TEST_EXECUTABLE = $(CMAKE_BUILD_DIR)/bin/test$(EXECUTABLE_SUFFIX)
 
+APP_ARGS ?= ./resource/java/PrimeNumbers.class $(subst $$,\$$,$(wildcard ./resource/java/PrimeNumbers$$*))
+
 .PHONY: all
 all: app
 
 .PHONY: run
 run: $(APP_EXECUTABLE)
-	$(APP_EXECUTABLE) ./resource/java/PrimeNumbers.class $(subst $$,\$$,$(wildcard ./resource/java/PrimeNumbers$$*))
+	$(APP_EXECUTABLE) $(APP_ARGS)
+
+.PHONY: valgrind
+valgrind: $(APP_EXECUTABLE)
+	valgrind --leak-check=full $(APP_EXECUTABLE) $(APP_ARGS)
 
 .PHONY: app
 app: $(APP_EXECUTABLE)
