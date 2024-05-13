@@ -31,14 +31,17 @@ public class PrimeNumbers {
     }
 
     public void run() {
-      if (number < 2)
-        return;
-      for (int i = 2; i * i < number; i++)
-        if (number % i == 0)
+      try {
+        if (number < 2)
           return;
-      Runtime.stdout().put(
-          join("Prime: ", Integer.valueOf(number).toString(), "\n"));
-      waitGroup.done();
+        for (int i = 2; i * i < number; i++)
+          if (number % i == 0)
+            return;
+        Runtime.stdout().put(
+            join("Prime: ", Integer.valueOf(number).toString(), "\n"));
+      } finally {
+        waitGroup.done();
+      }
     }
   }
 
