@@ -2,7 +2,7 @@ import core.Runtime;
 
 public class PrimeNumbers {
   public static void main(String[] args) throws Exception {
-    var maxNumber = 1000;
+    var maxNumber = 100000;
 
     var waitGroup = new WaitGroup(maxNumber);
     for (int i = 0; i < maxNumber; i++) {
