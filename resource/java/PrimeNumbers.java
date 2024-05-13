@@ -26,7 +26,7 @@ public class PrimeNumbers {
       if (number < 2) return;
       for (int i = 2; i * i < number; i++)
         if (number % i == 0) return;
-      Runtime.stdout().put(String.format("Prime: %d\n", number));
+      Runtime.stdout().put(Runtime.join("Prime: ", number, "\n"));
       waitGroup.done();
     }
   }
