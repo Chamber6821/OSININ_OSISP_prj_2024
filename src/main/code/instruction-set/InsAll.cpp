@@ -406,6 +406,13 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0xA4, jumpIf([](std::int32_t a, std::int32_t b) { return a <= b; })},
         {0xA5, jumpIf([](p<JavaObject> a, p<JavaObject> b) { return a == b; })},
         {0xA6, jumpIf([](p<JavaObject> a, p<JavaObject> b) { return a != b; })},
+        {0xA7, make<InsWrap>([](auto bytes, auto) {
+           auto offset = std::int16_t(mergeBytes(bytes[0], bytes[1]));
+           return make<Code::Wrap>([=](p<Context> context) {
+             jumpForward(context->instructionPointer(), offset);
+             return Code::Next{};
+           });
+         })},
         {0xBC, make<InsWrap>([=](auto bytes, auto) {
            auto value = defaultValueForType(bytes[0]);
            return make<Code::Wrap>([=](p<Context> context) {
