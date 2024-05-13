@@ -31,10 +31,10 @@ public:
       },
       objectClass
     );
-    add(objectClass->name(), objectClass);
-    add(stringClass->name(), stringClass);
-    add(stdoutClass->name(), stdoutClass);
-    add(runtimeClass->name(), runtimeClass);
-    add(integerClass->name(), integerClass);
+    add(objectClass);
+    add(stringClass);
+    add(stdoutClass);
+    add(runtimeClass);
+    add(integerClass);
   }
 };

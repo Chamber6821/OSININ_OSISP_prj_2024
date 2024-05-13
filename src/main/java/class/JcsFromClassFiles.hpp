@@ -2,8 +2,8 @@
 
 #include "class-file/ClassFile.hpp"
 #include "java/class/JavaClass.hpp"
+#include "java/class/JavaClasses.hpp"
 #include "java/class/JcFromClassFile.hpp"
-#include "java/class/JcsMap.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include <csignal>
@@ -15,10 +15,10 @@
 #include <utility>
 
 class JcsFromClassFiles : public JavaClasses {
-  p<JcsMap> origin;
+  p<JavaClasses> origin;
 
 public:
-  JcsFromClassFiles(p<JcsMap> origin, std::set<p<ClassFile>> files)
+  JcsFromClassFiles(p<JavaClasses> origin, std::set<p<ClassFile>> files)
       : origin(origin) {
     try {
       while (not files.empty()) {
@@ -28,10 +28,7 @@ public:
             auto superName = file->superClass()->name()->value();
             if (not origin->has(superName)) continue;
             auto super = origin->type(superName);
-            origin->add(
-              file->thisClass()->name()->value(),
-              make<JcFromClassFile>(file, origin)
-            );
+            origin->add(make<JcFromClassFile>(file, origin));
             toRemove.insert(file);
           } catch (...) {
             std::throw_with_nested(std::runtime_error(
@@ -56,4 +53,6 @@ public:
   p<JavaClass> type(std::string name) const override {
     return origin->type(std::move(name));
   }
+
+  void add(p<JavaClass> type) override { origin->add(std::move(type)); }
 };

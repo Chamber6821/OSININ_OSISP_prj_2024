@@ -24,8 +24,6 @@ public:
       : JcsMap(std::map<std::string, p<JavaClass>>{{classes->name(), classes}...
         }) {}
 
-  void add(std::string name, p<JavaClass> type) { map[name] = type; }
-
   bool has(std::string name) const override { return map.contains(name); }
 
   p<JavaClass> type(std::string name) const override try {
@@ -36,4 +34,6 @@ public:
       std::runtime_error(std::format("Not found class {}", name))
     );
   }
+
+  void add(p<JavaClass> type) override { map[type->name()] = type; }
 };
