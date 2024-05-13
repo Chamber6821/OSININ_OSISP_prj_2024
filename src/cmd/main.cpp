@@ -5,6 +5,7 @@
 #include "execution/task/JavaTask.hpp"
 #include "java/class/JcsFromClassFiles.hpp"
 #include "java/class/JcsSystem.hpp"
+#include "java/class/JcsWeakWrap.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/stringify/exception.hpp"
@@ -30,10 +31,11 @@ int main(int argc, char **argv) {
       parsedClasses.emplace_back(make<CfParsed>(file));
     }
 
+    auto classes = make<JcsSystem>();
     make<MaSingleThread>(
       make<QuStl>(make<JavaTask>(Code::Call{
         .type = make<JcsFromClassFiles>(
-                  make<JcsSystem>(),
+                  make<JcsWeakWrap>(classes),
                   std::set(parsedClasses.begin(), parsedClasses.end())
         )
                   ->type(parsedClasses.front()->thisClass()->name()->value()),
