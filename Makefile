@@ -3,9 +3,9 @@ rwildcard = $(filter-out \ ,$(foreach pattern,$(2),$(wildcard $(1)/$(pattern))) 
 # https://stackoverflow.com/a/7324640/13830772
 eq = $(and $(findstring $(1),$(2)),$(findstring $(2),$(1)))
 
-CONFIG ?= config/release.mk
-include config/default.mk # load default settings
--include $(CONFIG)        # load user configuration for user platform
+-include .env
+CONFIG ?= config/default.mk
+include $(CONFIG)
 
 APP_TARGET     ?= main
 BUILD_NAME     ?= default
