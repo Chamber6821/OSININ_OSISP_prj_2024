@@ -28,7 +28,7 @@ public:
         auto arrayObject =
           std::get<p<JavaObject>>(*stringObject->field("$content"));
         auto length = std::get<std::int32_t>(*arrayObject->field("$length"));
-        auto string = std::string(" ", length);
+        auto string = std::string(length, ' ');
         for (int i = 0; i < length; i++) {
           string[i] =
             std::get<std::int32_t>(*arrayObject->field(std::format("${}", i)));
