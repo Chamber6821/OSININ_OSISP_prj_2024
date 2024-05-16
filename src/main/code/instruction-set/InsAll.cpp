@@ -378,6 +378,11 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
+        {0x15, fromLocalToStack()},
+        {0x16, fromLocalToStack()},
+        {0x17, fromLocalToStack()},
+        {0x18, fromLocalToStack()},
+        {0x19, fromLocalToStack()},
         {0x1A, fromLocalToStack(0)},
         {0x1B, fromLocalToStack(1)},
         {0x1C, fromLocalToStack(2)},
@@ -394,6 +399,11 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x33, loadFromArray()},
         {0x34, loadFromArray()},
         {0x35, loadFromArray()},
+        {0x36, fromStackToLocal()},
+        {0x37, fromStackToLocal()},
+        {0x38, fromStackToLocal()},
+        {0x39, fromStackToLocal()},
+        {0x3A, fromStackToLocal()},
         {0x3B, fromStackToLocal(0)},
         {0x3C, fromStackToLocal(1)},
         {0x3D, fromStackToLocal(2)},
