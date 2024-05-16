@@ -98,6 +98,28 @@ p<InstructionSet> fromLocalToStack(int index) {
   });
 }
 
+p<InstructionSet> fromStackToLocal() {
+  return make<InsWrap>([](auto bytes, auto) {
+    auto index = bytes[0];
+    return make<Code::Wrap>([=](p<Context> context) {
+      jumpForward(context->instructionPointer(), 2);
+      context->locals()->put(index, context->stack()->pop());
+      return Code::Next{};
+    });
+  });
+}
+
+p<InstructionSet> fromLocalToStack() {
+  return make<InsWrap>([](auto bytes, auto) {
+    auto index = bytes[0];
+    return make<Code::Wrap>([=](p<Context> context) {
+      jumpForward(context->instructionPointer(), 2);
+      context->stack()->push(context->locals()->at(index));
+      return Code::Next{};
+    });
+  });
+}
+
 p<InstructionSet> loadValue(p<JavaValue> value) {
   return stackInstruction([=](p<Context> context) {
     context->stack()->push(value);
@@ -276,15 +298,6 @@ InsAll::InsAll(p<JavaClasses> classes)
              return Code::Next{};
            });
          })},
-        {0x11, make<InsWrap>([](auto bytes, auto) {
-           auto constant =
-             make<JavaValue>(std::int32_t(mergeBytes(bytes[0], bytes[1])));
-           return make<Code::Wrap>([=](p<Context> context) {
-             context->stack()->push(constant);
-             jumpForward(context->instructionPointer(), 3);
-             return Code::Next{};
-           });
-         })},
         {0xBB, make<InsWrap>([=](auto bytes, p<ConstantPool> pool) {
            auto type = classes->type(
              verifyConstant<CoClass>(pool->at(mergeBytes(bytes[0], bytes[1])))
@@ -348,6 +361,23 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x0D, loadValue(float(2))},
         {0x0E, loadValue(double(0))},
         {0x0F, loadValue(double(1))},
+        {0x10, make<InsWrap>([](auto bytes, auto) {
+           auto constant = make<JavaValue>(std::int32_t(bytes[0]));
+           return make<Code::Wrap>([=](p<Context> context) {
+             jumpForward(context->instructionPointer(), 2);
+             context->stack()->push(constant);
+             return Code::Next{};
+           });
+         })},
+        {0x11, make<InsWrap>([](auto bytes, auto) {
+           auto constant =
+             make<JavaValue>(std::int32_t(mergeBytes(bytes[0], bytes[1])));
+           return make<Code::Wrap>([=](p<Context> context) {
+             jumpForward(context->instructionPointer(), 3);
+             context->stack()->push(constant);
+             return Code::Next{};
+           });
+         })},
         {0x1A, fromLocalToStack(0)},
         {0x1B, fromLocalToStack(1)},
         {0x1C, fromLocalToStack(2)},
