@@ -479,8 +479,10 @@ InsAll::InsAll(p<JavaClasses> classes)
            );
          })},
         {0xC2, stackInstruction([=](p<Context> context) -> Code::Result {
-           if (std::get<p<JavaObject>>(*context->stack()->pop())->tryLock())
-             return Code::Next{};
+           auto value = context->stack()->pop();
+           if (std::get<p<JavaObject>>(*value)->tryLock()) return Code::Next{};
+           context->stack()->push(std::move(value));
+           jumpForward(context->instructionPointer(), -1);
            return Code::Call{
              .type = classes->type("core/Runtime"),
              .method = {.name = "suspend", .signature = "()V"},
