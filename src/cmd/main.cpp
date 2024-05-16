@@ -1,6 +1,6 @@
 #include "class-file/CfParsed.hpp"
 #include "class-file/ClassFile.hpp"
-#include "execution/machine/MaSingleThread.hpp"
+#include "execution/machine/MaMultiThread.hpp"
 #include "execution/queue/QuStl.hpp"
 #include "execution/task/JavaTask.hpp"
 #include "java/class/JcsFromClassFiles.hpp"
@@ -32,7 +32,8 @@ int main(int argc, char **argv) {
     }
 
     auto classes = make<JcsSystem>();
-    make<MaSingleThread>(
+    make<MaMultiThread>(
+      12,
       make<QuStl>(make<JavaTask>(Code::Call{
         .type = make<JcsFromClassFiles>(
                   make<JcsWeakWrap>(classes),
