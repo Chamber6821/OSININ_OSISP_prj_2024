@@ -29,10 +29,10 @@ public:
       threads.emplace_back([&]() {
         try {
           MaSingleThread(queue).run();
-          cancelation->stop();
         } catch (const std::exception &e) {
           std::cout << stringify(e);
         }
+        cancelation->stop();
       });
     }
     for (auto &thread : threads)
