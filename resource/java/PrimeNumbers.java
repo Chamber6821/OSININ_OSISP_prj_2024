@@ -2,13 +2,13 @@ import core.Runtime;
 
 public class PrimeNumbers {
   public static void main(String[] args) throws Exception {
-    var maxNumber = 100000;
+    var maxNumber = 10000;
 
-    var waitGroup = new WaitGroup(maxNumber);
+    var finish = new Finish(maxNumber);
     for (int i = 0; i < maxNumber; i++) {
-      Runtime.launch(new Task(i + 1, waitGroup));
+      Runtime.launch(new Task(i + 1000000000, finish.markerFor(i)));
     }
-    waitGroup.waitAll();
+    finish.waitAll();
 
     Runtime.stdout().put("Done!\n");
   }
@@ -23,11 +23,11 @@ public class PrimeNumbers {
 
   static class Task implements Runnable {
     private int number;
-    private WaitGroup waitGroup;
+    private Finish.Marker marker;
 
-    public Task(int number, WaitGroup waitGroup) {
+    public Task(int number, Finish.Marker marker) {
       this.number = number;
-      this.waitGroup = waitGroup;
+      this.marker = marker;
     }
 
     public void run() {
@@ -40,27 +40,46 @@ public class PrimeNumbers {
         Runtime.stdout().put(
             join("Prime: ", Integer.valueOf(number).toString(), "\n"));
       } finally {
-        waitGroup.done();
+        marker.done();
       }
     }
   }
 
-  static class WaitGroup {
-    private int tasks;
+  static class Finish {
+    private boolean dones[];
 
-    public WaitGroup(int tasks) {
-      this.tasks = tasks;
-    }
-
-    public void done() {
-      synchronized (this) {
-        tasks--;
-      }
+    public Finish(int tasks) {
+      dones = new boolean[tasks];
     }
 
     public void waitAll() {
-      while (tasks > 0)
+      while (!allDone()) {
         Runtime.suspend();
+      }
+    }
+
+    public boolean allDone() {
+      for (var done : dones) {
+        if (!done)
+          return false;
+      }
+      return true;
+    }
+
+    public Marker markerFor(int index) {
+      return new Marker(index);
+    }
+
+    public class Marker {
+      private int index;
+
+      Marker(int index) {
+        this.index = index;
+      }
+
+      public void done() {
+        dones[index] = true;
+      }
     }
   }
 }
