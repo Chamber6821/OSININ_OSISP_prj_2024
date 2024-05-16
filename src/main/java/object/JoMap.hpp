@@ -14,7 +14,7 @@
 class JoMap : public JavaObject {
   p<JavaClass> _type;
   std::map<std::string, p<JavaValue>> map;
-  std::atomic<bool> monitor = false;
+  std::atomic_flag monitor = false;
 
 public:
   JoMap(p<JavaClass> type) : _type(std::move(type)) {}
@@ -35,10 +35,7 @@ public:
     map[name] = value;
   }
 
-  bool tryLock() override {
-    bool locked = false;
-    return monitor.compare_exchange_strong(locked, true);
-  }
+  bool tryLock() override { return not monitor.test_and_set(); }
 
-  void unlock() override { monitor.exchange(false); }
+  void unlock() override { monitor.clear(); }
 };
