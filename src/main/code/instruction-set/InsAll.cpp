@@ -15,6 +15,11 @@
 #include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
 #include "java/value/JavaValues.hpp"
+#include "java/value/JvDouble.hpp"
+#include "java/value/JvFloat.hpp"
+#include "java/value/JvInt.hpp"
+#include "java/value/JvLong.hpp"
+#include "java/value/JvObject.hpp"
 #include "java/value/JvsAutoExtendable.hpp"
 #include "make.hpp"
 #include "p.hpp"
@@ -126,10 +131,17 @@ p<InstructionSet> loadValue(p<JavaValue> value) {
   });
 }
 
-p<InstructionSet> loadValue(auto value) {
-  auto ptr = make<JavaValue>(std::move(value));
-  return loadValue(ptr);
-}
+p<JavaValue> makeValue(std::int32_t value) { return make<JvInt>(value); }
+
+p<JavaValue> makeValue(std::int64_t value) { return make<JvLong>(value); }
+
+p<JavaValue> makeValue(float value) { return make<JvFloat>(value); }
+
+p<JavaValue> makeValue(double value) { return make<JvDouble>(value); }
+
+p<JavaValue> makeValue(p<JavaObject> value) { return make<JvObject>(value); }
+
+p<InstructionSet> loadValue(auto value) { return loadValue(makeValue(value)); }
 
 p<InstructionSet>
 jumpIf(std::function<bool(p<JavaValue> a, p<JavaValue> b)> comparator) {
@@ -150,14 +162,14 @@ jumpIf(std::function<bool(p<JavaValue> a, p<JavaValue> b)> comparator) {
 p<InstructionSet>
 jumpIf(std::function<bool(std::int32_t a, std::int32_t b)> comparator) {
   return jumpIf([=](p<JavaValue> a, p<JavaValue> b) {
-    return comparator(std::get<std::int32_t>(*a), std::get<std::int32_t>(*b));
+    return comparator(a->asInt(), b->asInt());
   });
 }
 
 p<InstructionSet>
 jumpIf(std::function<bool(p<JavaObject> a, p<JavaObject> b)> comparator) {
   return jumpIf([=](p<JavaValue> a, p<JavaValue> b) {
-    return comparator(std::get<p<JavaObject>>(*a), std::get<p<JavaObject>>(*b));
+    return comparator(a->asObject(), b->asObject());
   });
 }
 
@@ -176,24 +188,20 @@ p<InstructionSet> jumpIf(std::function<bool(p<JavaValue>)> comparator) {
 }
 
 p<InstructionSet> jumpIf(std::function<bool(std::int32_t)> comparator) {
-  return jumpIf([=](p<JavaValue> x) {
-    return comparator(std::get<std::int32_t>(*x));
-  });
+  return jumpIf([=](p<JavaValue> x) { return comparator(x->asInt()); });
 }
 
 p<InstructionSet> jumpIf(std::function<bool(p<JavaObject>)> comparator) {
-  return jumpIf([=](p<JavaValue> x) {
-    return comparator(std::get<p<JavaObject>>(*x));
-  });
+  return jumpIf([=](p<JavaValue> x) { return comparator(x->asObject()); });
 }
 
 template <class R, class A, class B>
 p<InstructionSet> calc(std::function<R(A, B)> action) {
   return stackInstruction([=](p<Context> context) {
     auto stack = context->stack();
-    auto value2 = std::get<B>(*stack->pop());
-    auto value1 = std::get<A>(*stack->pop());
-    stack->push(make<JavaValue>(action(std::move(value1), std::move(value2))));
+    auto value2 = stack->pop()->as<B>();
+    auto value1 = stack->pop()->as<A>();
+    stack->push(makeValue(action(std::move(value1), std::move(value2))));
   });
 }
 
@@ -205,8 +213,8 @@ p<InstructionSet> calc(auto action) {
 p<InstructionSet> loadFromArray() {
   return stackInstruction([](p<Context> context) {
     auto stack = context->stack();
-    auto index = std::get<std::int32_t>(*stack->pop());
-    auto array = std::get<p<JavaObject>>(*stack->pop());
+    auto index = stack->pop()->asInt();
+    auto array = stack->pop()->asObject();
     stack->push(array->field(std::format("${}", index)));
   });
 }
@@ -215,8 +223,8 @@ p<InstructionSet> storeToArray() {
   return stackInstruction([](p<Context> context) {
     auto stack = context->stack();
     auto value = stack->pop();
-    auto index = std::get<std::int32_t>(*stack->pop());
-    auto array = std::get<p<JavaObject>>(*stack->pop());
+    auto index = stack->pop()->asInt();
+    auto array = stack->pop()->asObject();
     array->setField(std::format("${}", index), std::move(value));
   });
 }
@@ -227,10 +235,10 @@ p<JavaValue> defaultValueForType(int atype) {
   case 5:
   case 8:
   case 9:
-  case 10: return make<JavaValue>(std::int32_t(0));
-  case 6: return make<JavaValue>(float(0));
-  case 7: return make<JavaValue>(double(0));
-  case 11: return make<JavaValue>(std::int64_t(0));
+  case 10: return make<JvInt>(0);
+  case 6: return make<JvFloat>(0);
+  case 7: return make<JvDouble>(0);
+  case 11: return make<JvLong>(0);
   default:
     throw std::runtime_error(std::format("Impossible array type: {}", atype));
   }
@@ -266,7 +274,7 @@ p<InstructionSet> invokeMethod(int instructionLength) {
         popArguments(context->stack(), countArguments(methodRef.signature) + 1);
       jumpForward(context->instructionPointer(), instructionLength);
       return Code::Call{
-        .type = std::get<p<JavaObject>>(*arguments->at(0))->type(),
+        .type = arguments->at(0)->asObject()->type(),
         .method = methodRef,
         .arguments = arguments,
       };
@@ -305,7 +313,7 @@ InsAll::InsAll(p<JavaClasses> classes)
                ->value()
            );
            return make<Code::Wrap>([=](p<Context> context) {
-             context->stack()->push(make<JavaValue>(type->newObject(type)));
+             context->stack()->push(make<JvObject>(type->newObject(type)));
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
            });
@@ -324,7 +332,7 @@ InsAll::InsAll(p<JavaClasses> classes)
                ->value();
            return make<Code::Wrap>([=](p<Context> context) {
              auto stack = context->stack();
-             auto object = std::get<p<JavaObject>>(*stack->pop());
+             auto object = stack->pop()->asObject();
              stack->push(object->field(fieldName));
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
@@ -340,7 +348,7 @@ InsAll::InsAll(p<JavaClasses> classes)
            return make<Code::Wrap>([=](p<Context> context) {
              auto stack = context->stack();
              auto value = stack->pop();
-             auto object = std::get<p<JavaObject>>(*stack->pop());
+             auto object = stack->pop()->asObject();
              object->setField(fieldName, std::move(value));
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
@@ -362,7 +370,7 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0x0E, loadValue(double(0))},
         {0x0F, loadValue(double(1))},
         {0x10, make<InsWrap>([](auto bytes, auto) {
-           auto constant = make<JavaValue>(std::int32_t(bytes[0]));
+           auto constant = make<JvInt>(bytes[0]);
            return make<Code::Wrap>([=](p<Context> context) {
              jumpForward(context->instructionPointer(), 2);
              context->stack()->push(constant);
@@ -370,8 +378,7 @@ InsAll::InsAll(p<JavaClasses> classes)
            });
          })},
         {0x11, make<InsWrap>([](auto bytes, auto) {
-           auto constant =
-             make<JavaValue>(std::int32_t(mergeBytes(bytes[0], bytes[1])));
+           auto constant = make<JvInt>(mergeBytes(bytes[0], bytes[1]));
            return make<Code::Wrap>([=](p<Context> context) {
              jumpForward(context->instructionPointer(), 3);
              context->stack()->push(constant);
@@ -442,10 +449,7 @@ InsAll::InsAll(p<JavaClasses> classes)
            return make<Code::Wrap>([=](p<Context> context) {
              context->locals()->put(
                localIndex,
-               make<JavaValue>(
-                 delta +
-                 std::get<std::int32_t>(*context->locals()->at(localIndex))
-               )
+               make<JvInt>(delta + context->locals()->at(localIndex)->asInt())
              );
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
@@ -486,41 +490,41 @@ InsAll::InsAll(p<JavaClasses> classes)
         {0xBC, make<InsWrap>([=](auto bytes, auto) {
            auto value = defaultValueForType(bytes[0]);
            return make<Code::Wrap>([=](p<Context> context) {
-             auto length = std::get<std::int32_t>(*context->stack()->pop());
+             auto length = context->stack()->pop()->asInt();
              auto objectClass = classes->type("java/lang/Object");
              auto array = objectClass->newObject(objectClass);
-             array->setField("$length", make<JavaValue>(length));
+             array->setField("$length", make<JvInt>(length));
              for (int i = 0; i < length; i++) {
                array->setField(std::format("${}", i), value);
              }
-             context->stack()->push(make<JavaValue>(array));
+             context->stack()->push(make<JvObject>(array));
              jumpForward(context->instructionPointer(), 2);
              return Code::Next{};
            });
          })},
         {0xBD, make<InsWrap>([=](auto, auto) {
-           auto value = make<JavaValue>(nullptr);
+           auto value = make<JvObject>(nullptr);
            return make<Code::Wrap>([=](p<Context> context) {
-             auto length = std::get<std::int32_t>(*context->stack()->pop());
+             auto length = context->stack()->pop()->asInt();
              auto objectClass = classes->type("java/lang/Object");
              auto array = objectClass->newObject(objectClass);
-             array->setField("$length", make<JavaValue>(length));
+             array->setField("$length", make<JvInt>(length));
              for (int i = 0; i < length; i++) {
                array->setField(std::format("${}", i), value);
              }
-             context->stack()->push(make<JavaValue>(array));
+             context->stack()->push(make<JvObject>(array));
              jumpForward(context->instructionPointer(), 3);
              return Code::Next{};
            });
          })},
         {0xBE, stackInstruction([](p<Context> context) {
            context->stack()->push(
-             std::get<p<JavaObject>>(*context->stack()->pop())->field("$length")
+             context->stack()->pop()->asObject()->field("$length")
            );
          })},
         {0xC2, stackInstruction([=](p<Context> context) -> Code::Result {
            auto value = context->stack()->pop();
-           if (std::get<p<JavaObject>>(*value)->tryLock()) return Code::Next{};
+           if (value->asObject()->tryLock()) return Code::Next{};
            context->stack()->push(std::move(value));
            jumpForward(context->instructionPointer(), -1);
            return Code::Call{
@@ -530,7 +534,7 @@ InsAll::InsAll(p<JavaClasses> classes)
            };
          })},
         {0xC3, stackInstruction([](p<Context> context) {
-           std::get<p<JavaObject>>(*context->stack()->pop())->unlock();
+           context->stack()->pop()->asObject()->unlock();
          })},
         {0xC6, jumpIf([](p<JavaObject> a) { return a == nullptr; })},
         {0xC7, jumpIf([](p<JavaObject> a) { return a != nullptr; })},

@@ -24,14 +24,12 @@ public:
   p<Code> methodCode(MethodReference reference) const override {
     if (reference.equal("put", "(Ljava/lang/String;)V"))
       return make<Code::Wrap>([this](p<Context> context, auto) {
-        auto stringObject = std::get<p<JavaObject>>(*context->locals()->at(1));
-        auto arrayObject =
-          std::get<p<JavaObject>>(*stringObject->field("$content"));
-        auto length = std::get<std::int32_t>(*arrayObject->field("$length"));
+        auto stringObject = context->locals()->at(1)->asObject();
+        auto arrayObject = stringObject->field("$content")->asObject();
+        auto length = arrayObject->field("$length")->asInt();
         auto string = std::string(length, ' ');
         for (int i = 0; i < length; i++) {
-          string[i] =
-            std::get<std::int32_t>(*arrayObject->field(std::format("${}", i)));
+          string[i] = arrayObject->field(std::format("${}", i))->asInt();
         }
         out << string;
         return Code::ReturnVoid{};

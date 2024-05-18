@@ -5,8 +5,12 @@
 #include "class-file/constant/CoLong.hpp"
 #include "class-file/constant/CoString.hpp"
 #include "java/class/JavaClasses.hpp"
-#include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
+#include "java/value/JvDouble.hpp"
+#include "java/value/JvFloat.hpp"
+#include "java/value/JvInt.hpp"
+#include "java/value/JvLong.hpp"
+#include "java/value/JvObject.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/verifyConstant.hpp"
@@ -16,19 +20,19 @@
 p<JavaValue> valueOfConstant(p<Constant> constant, p<JavaClasses> classes) {
   switch (constant->tag()) {
   case Constant::Tag::Integer:
-    return make<JavaValue>(
+    return make<JvInt>(
       verifyConstant<CoInteger>(Constant::Tag::Integer, constant)->value()
     );
   case Constant::Tag::Float:
-    return make<JavaValue>(
+    return make<JvFloat>(
       verifyConstant<CoFloat>(Constant::Tag::Float, constant)->value()
     );
   case Constant::Tag::Long:
-    return make<JavaValue>(
+    return make<JvLong>(
       verifyConstant<CoLong>(Constant::Tag::Long, constant)->value()
     );
   case Constant::Tag::Double:
-    return make<JavaValue>(
+    return make<JvDouble>(
       verifyConstant<CoDouble>(Constant::Tag::Double, constant)->value()
     );
   case Constant::Tag::String: {
@@ -39,15 +43,12 @@ p<JavaValue> valueOfConstant(p<Constant> constant, p<JavaClasses> classes) {
                      ->value()
                      ->value();
     auto array = objectClass->newObject(objectClass);
-    array->setField("$length", make<JavaValue>(std::int32_t(content.size())));
+    array->setField("$length", make<JvInt>(content.size()));
     for (int i = 0; i < (int)content.size(); i++) {
-      array->setField(
-        std::format("${}", i),
-        make<JavaValue>(std::int32_t(content[i]))
-      );
+      array->setField(std::format("${}", i), make<JvInt>(content[i]));
     }
-    object->setField("$content", make<JavaValue>(array));
-    return make<JavaValue>(object);
+    object->setField("$content", make<JvObject>(array));
+    return make<JvObject>(object);
   }
   default:
     throw std::runtime_error(std::format(

@@ -28,13 +28,13 @@ public:
         auto arguments = context->locals();
         auto arg0 = arguments->at(0);
         auto arg1 = arguments->at(1);
-        std::get<p<JavaObject>>(*arg0)->setField("$content", arg1);
+        arg0->asObject()->setField("$content", arg1);
         return Code::ReturnVoid{};
       });
     if (reference.equal("getBytes", "()[B"))
       return make<Code::Wrap>([](p<Context> context) {
         return Code::ReturnValue{
-          std::get<p<JavaObject>>(*context->locals()->at(0))->field("$content")
+          context->locals()->at(0)->asObject()->field("$content")
         };
       });
     return super->methodCode(std::move(reference));

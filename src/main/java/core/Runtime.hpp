@@ -8,13 +8,14 @@
 #include "java/class/JavaClass.hpp"
 #include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
+#include "java/value/JvInt.hpp"
+#include "java/value/JvObject.hpp"
 #include "java/value/JvsAutoExtendable.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include "tool/Iterable.hpp"
 #include <format>
 #include <map>
-#include <memory>
 #include <regex>
 #include <stdexcept>
 #include <string>
@@ -39,7 +40,7 @@ public:
   p<Code> methodCode(MethodReference reference) const override {
     if (reference.equal("stdout", "()Lcore/Runtime$Ostream;"))
       return make<Code::Wrap>([this](auto, auto) {
-        return Code::ReturnValue{make<JavaValue>(stdout)};
+        return Code::ReturnValue{make<JvObject>(stdout)};
       });
     if (reference.equal("suspend", "()V"))
       return make<Code::Wrap>([](p<Context> context, auto) -> Code::Result {
@@ -54,7 +55,7 @@ public:
           return Code::ReturnVoid{};
         context->instructionPointer()->gotoAddress(1);
         auto objectValue = context->locals()->at(0);
-        auto object = std::get<p<JavaObject>>(*objectValue);
+        auto object = objectValue->asObject();
         return Code::ExecuteTasks{
           .tasks = make<Iterable<p<Task>>::Single>(make<JavaTask>(Code::Call{
             .type = object->type(),
@@ -73,12 +74,11 @@ public:
       return make<Code::Wrap>([this](p<Context> context) {
         auto object = objectClass->newObject(objectClass);
         auto objectLength = 0;
-        auto array = std::get<p<JavaObject>>(*context->locals()->at(0));
-        auto arrayLength = std::get<std::int32_t>(*array->field("$length"));
+        auto array = context->locals()->at(0)->asObject();
+        auto arrayLength = array->field("$length")->asInt();
         for (int i = 0; i < arrayLength; i++) {
-          auto string =
-            std::get<p<JavaObject>>(*array->field(std::format("${}", i)));
-          auto stringLength = std::get<std::int32_t>(*string->field("$length"));
+          auto string = array->field(std::format("${}", i))->asObject();
+          auto stringLength = string->field("$length")->asInt();
           for (int j = 0; j < stringLength; j++) {
             object->setField(
               std::format("${}", objectLength),
@@ -87,11 +87,8 @@ public:
             objectLength++;
           }
         }
-        object->setField(
-          "$length",
-          make<JavaValue>(std::int32_t(objectLength))
-        );
-        return Code::ReturnValue{make<JavaValue>(std::move(object))};
+        object->setField("$length", make<JvInt>(objectLength));
+        return Code::ReturnValue{make<JvObject>(std::move(object))};
       });
     throw std::runtime_error(
       std::format("Class {} has no method {}", name(), reference)

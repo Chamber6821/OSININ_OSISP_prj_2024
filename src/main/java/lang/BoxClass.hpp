@@ -6,6 +6,8 @@
 #include "java/class/JavaClass.hpp"
 #include "java/object/JavaObject.hpp"
 #include "java/value/JavaValue.hpp"
+#include "java/value/JvInt.hpp"
+#include "java/value/JvObject.hpp"
 #include "make.hpp"
 #include "p.hpp"
 #include <cstddef>
@@ -39,17 +41,11 @@ public:
           [toString, emptyString](p<JavaValue> value) {
             auto str = toString(std::move(value));
             auto string = emptyString();
-            auto array = std::get<p<JavaObject>>(*string->field("$content"));
+            auto array = string->field("$content")->asObject();
             for (std::size_t i = 0; i < str.size(); i++) {
-              array->setField(
-                std::format("${}", i),
-                make<JavaValue>(std::int32_t(str[i]))
-              );
+              array->setField(std::format("${}", i), make<JvInt>(str[i]));
             }
-            array->setField(
-              "$length",
-              make<JavaValue>(std::int32_t(str.size()))
-            );
+            array->setField("$length", make<JvInt>(str.size()));
             return string;
           },
           std::move(super)
@@ -62,9 +58,7 @@ public:
   )
       : BoxClass(
           std::move(name),
-          [toString](p<JavaValue> value) {
-            return toString(std::get<T>(*value));
-          },
+          [toString](p<JavaValue> value) { return toString(value->as<T>()); },
           std::move(emptyString), std::move(super)
         ) {}
 
@@ -91,13 +85,13 @@ public:
         auto object =
           newObject(std::const_pointer_cast<BoxClass>(shared_from_this()));
         object->setField("$content", context->locals()->at(0));
-        return Code::ReturnValue{make<JavaValue>(std::move(object))};
+        return Code::ReturnValue{make<JvObject>(std::move(object))};
       });
     if (method.equal("toString", "()Ljava/lang/String;"))
       return make<Code::Wrap>([this](p<Context> context) {
-        return Code::ReturnValue{make<JavaValue>(toString(
-          std::get<p<JavaObject>>(*context->locals()->at(0))->field("$content")
-        ))};
+        return Code::ReturnValue{make<JvObject>(
+          toString(context->locals()->at(0)->asObject()->field("$content"))
+        )};
       });
     return super->methodCode(std::move(method));
   } catch (...) {
