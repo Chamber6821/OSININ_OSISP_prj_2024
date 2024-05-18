@@ -36,6 +36,13 @@ all: app
 run: $(APP_EXECUTABLE)
 	$(APP_EXECUTABLE) $(APP_ARGS)
 
+.PHONY: perf
+perf: $(APP_EXECUTABLE)
+	perf record -o $(CMAKE_BUILD_DIR)/perf.data --call-graph fp $(APP_EXECUTABLE) $(APP_ARGS)
+	perf script -i $(CMAKE_BUILD_DIR)/perf.data | stackcollapse-perf.pl > $(CMAKE_BUILD_DIR)/collapsed-perf.data
+	flamegraph.pl $(CMAKE_BUILD_DIR)/collapsed-perf.data > $(CMAKE_BUILD_DIR)/flamegraph.svg
+	firefox $(CMAKE_BUILD_DIR)/flamegraph.svg
+
 .PHONY: valgrind
 valgrind: $(APP_EXECUTABLE)
 	valgrind --leak-check=full $(APP_EXECUTABLE) $(APP_ARGS)
