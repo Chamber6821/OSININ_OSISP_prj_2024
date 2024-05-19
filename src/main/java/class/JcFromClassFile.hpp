@@ -1,9 +1,10 @@
 #pragma once
 
 #include "class-file/ClassFile.hpp"
-#include "code/CdFromBytes.hpp"
+#include "code/CdFromBytecode.hpp"
 #include "code/CdWithExceptionTable.hpp"
 #include "code/MethodReference.hpp"
+#include "code/bytecode/BtFromBytes.hpp"
 #include "code/exception-table/EtFromBytes.hpp"
 #include "code/instruction-set/InsAll.hpp"
 #include "code/instruction-set/InstructionSet.hpp"
@@ -104,11 +105,11 @@ public:
                   ),
                   classFile->constantPool()
                 ),
-                make<CdFromBytes>(
+                make<CdFromBytecode>(make<BtFromBytes>(
                   std::vector<std::uint8_t>(codeBegin, codeEnd),
                   classFile->constantPool(),
                   instructionSet
-                )
+                ))
               );
             } catch (...) {
               std::throw_with_nested(
