@@ -4,6 +4,7 @@
 #include "code/CdFromBytecode.hpp"
 #include "code/CdWithExceptionTable.hpp"
 #include "code/MethodReference.hpp"
+#include "code/bytecode/BtCached.hpp"
 #include "code/bytecode/BtFromBytes.hpp"
 #include "code/exception-table/EtFromBytes.hpp"
 #include "code/instruction-set/InsAll.hpp"
@@ -19,6 +20,7 @@
 #include "tool/valueOfConstant.hpp"
 #include <exception>
 #include <format>
+#include <iterator>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -105,10 +107,13 @@ public:
                   ),
                   classFile->constantPool()
                 ),
-                make<CdFromBytecode>(make<BtFromBytes>(
-                  std::vector<std::uint8_t>(codeBegin, codeEnd),
-                  classFile->constantPool(),
-                  instructionSet
+                make<CdFromBytecode>(make<BtCached>(
+                  std::distance(codeBegin, codeEnd),
+                  make<BtFromBytes>(
+                    std::vector<std::uint8_t>(codeBegin, codeEnd),
+                    classFile->constantPool(),
+                    instructionSet
+                  )
                 ))
               );
             } catch (...) {
