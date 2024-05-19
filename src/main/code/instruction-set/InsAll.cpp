@@ -36,7 +36,7 @@
 #include <stdexcept>
 
 int countArguments(const std::string &signature) {
-  std::regex argumentPattern(R"(\[*B|C|D|F|I|J|S|Z|V|L[^;]+;)");
+  static std::regex argumentPattern(R"(\[*B|C|D|F|I|J|S|Z|V|L[^;]+;)");
   return std::distance(
     std::sregex_iterator(
       signature.begin() + signature.find('(') + 1,
